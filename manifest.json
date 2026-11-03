@@ -1,7 +1,7 @@
 {
   "name": "HorarioCalend",
   "short_name": "Mi Horario",
-  "start_url": "./CalenHorarioMultiNoteEduTrb.html",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#1e1e2e",
   "theme_color": "#2a2a3e",
