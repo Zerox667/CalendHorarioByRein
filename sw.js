@@ -1,6 +1,7 @@
-﻿const CACHE_NAME = 'HorarioCalend-pwa-v1';
+const CACHE_NAME = 'HorarioCalend-pwa-v1';
 const ASSETS = [
-  './CalenHorarioMultiNoteEduTrb.html',
+  './',
+  './index.html',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
