@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -25,7 +25,23 @@
     display: flex; gap: 8px; align-items: center;
     flex-wrap: wrap; border-bottom: 2px solid #444;
   }
-  header h1 { margin: 0; font-size: 18px; flex-grow: 1; }
+  header h1 { margin: 0; font-size: 18px; flex-grow: 1; display: flex; align-items: center; gap: 6px; }
+  
+  /* Botón oculto / discreto en el título */
+  #secretResetBtn {
+    background: transparent;
+    border: none;
+    color: #444;
+    font-size: 10px;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 3px;
+    transition: color 0.3s;
+  }
+  #secretResetBtn:hover {
+    color: #ff5555;
+    background: rgba(255, 85, 85, 0.1);
+  }
   
   button, select, input {
     font-family: inherit; font-size: 13px; padding: 6px 10px;
@@ -58,12 +74,10 @@
   .calDay.otherMonth { opacity: 0.3; }
   .calDay.today { border-color: #ffb84d; }
   .calDay .dayNum { font-weight: bold; font-size: 14px; margin-bottom: 2px; }
-  .calDay.workday { background: #3d2a2a; }
-  .calDay.workday .dayNum::after { content: " [T]"; font-size: 9px; color: #ff9a9a; }
-  .calDay .mini { font-size: 9px; color: #ff9a9a; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .calDay .mini.est { color: #7db8ff; }
-  .calDay .mini.eval { color: #ffcc66; font-weight: bold; }
-  .calDay .mini.note { color: #cc99ff; font-style: italic; }
+  .calDay .mini { font-size: 9px; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 1px 3px; border-radius: 3px; }
+  .calDay .mini.est { color: #7db8ff; background: #223344; }
+  .calDay .mini.eval { color: #ffcc66; font-weight: bold; background: #443b22; }
+  .calDay .mini.note { color: #cc99ff; font-style: italic; background: #332244; }
 
   /* VISTA DÍA */
   .dayHeader {
@@ -152,6 +166,20 @@
   .patternItem { background: #222233; border: 1px solid #444; border-radius: 6px; padding: 10px; margin-bottom: 10px; position: relative; }
   .patternItem .delPat { position: absolute; top: 10px; right: 10px; background: #6a2a2a; border-color: #8a3a3a; padding: 2px 8px; font-size: 11px; }
 
+  /* CALENDARIO MANUAL PARA DÍAS SUELTOS */
+  .manualCalGrid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-top: 10px; }
+  .manualDayName { text-align: center; font-weight: bold; color: #aaa; font-size: 11px; padding: 2px; }
+  .manualDayCell {
+    background: #1e1e2e; border: 1px solid #444; border-radius: 4px;
+    min-height: 45px; padding: 4px; cursor: pointer; font-size: 10px;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .manualDayCell:hover { border-color: #6abf7a; }
+  .manualDayCell.otherMonth { opacity: 0.2; }
+  .manualDayCell .mNum { font-weight: bold; font-size: 11px; }
+  .manualDayMarks { display: flex; flex-wrap: wrap; gap: 2px; margin-top: 2px; }
+  .manualMarkDot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
   .blkRow { display: grid; grid-template-columns: 1fr 1fr 1fr 30px; gap: 4px; margin-bottom: 4px; align-items: center; }
   .blkRow input { width: 100%; }
   .blkRow .del { background: #6a2a2a; border-color: #8a3a3a; padding: 4px 8px; }
@@ -184,7 +212,11 @@
 <body>
 
 <header>
-  <h1>Mi Horario</h1>
+  <h1>
+    Mi Horario
+    <!-- Botón oculto / discreto incrustado al lado del título -->
+    <button id="secretResetBtn" title="Restablecer sistema" onclick="triggerSecretReset()">⚙</button>
+  </h1>
   <button id="tabCalendar" class="tab active">Calendario</button>
   <button id="tabDay" class="tab">D&iacute;a</button>
   <button id="tabWeek" class="tab">Semana</button>
@@ -312,9 +344,35 @@
     <div class="row">
       <button id="patAddBtn">+ A&ntilde;adir trabajo</button>
     </div>
+    <div class="row" style="margin-top:15px; border-top:1px solid #444; padding-top:10px;">
+      <button id="openManualDaysModal" style="background:#4a5c7c; border-color:#6a8abf; width:100%;">📅 Marcar días sueltos (sin patrón)</button>
+    </div>
     <div class="row" style="margin-top:20px;">
       <button id="patSave">Guardar</button>
       <button id="patCancel">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Nuevo Modal: Calendario de días sueltos (manuales) -->
+<div id="manualDaysModal" class="modal">
+  <div class="modalBox" style="max-width: 600px;">
+    <h3>Marcar Días Libres / Sueltos por Trabajo</h3>
+    <p class="hint">Selecciona primero un trabajo y haz clic en los días del calendario para marcarlos o desmarcarlos libremente.</p>
+    
+    <label>Selecciona el trabajo:</label>
+    <select id="manualJobSelect" style="margin-bottom: 10px;"></select>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin: 10px 0;">
+      <button id="manPrevMonth">&laquo; Mes anterior</button>
+      <span id="manMonthLabel" style="font-weight: bold; font-size: 15px;"></span>
+      <button id="manNextMonth">Mes siguiente &raquo;</button>
+    </div>
+
+    <div class="manualCalGrid" id="manualCalGrid"></div>
+
+    <div class="row" style="margin-top:20px;">
+      <button id="closeManualModal" style="width:100%;">Volver a patrones</button>
     </div>
   </div>
 </div>
@@ -361,14 +419,25 @@ const STORAGE_KEY = 'miHorario_v1';
 let state = {
   globalPriority: 'trabajo',
   patterns: [],
+  manualDays: {},
   blocks: [],
   days: {}
 };
 let currentDate = '';
 let modalTargetISO = '';
 let calYear, calMonth;
+let manYear, manMonth;
 let weekStartDate = null;
 let isLocked = true;
+
+const DEFAULT_JOB_COLORS = ['#e65c5c', '#5ce6a1', '#e6c25c', '#5cc2e6', '#d95ce6'];
+
+function getJobColor(index) {
+  if (state.patterns && state.patterns[index] && state.patterns[index].color) {
+    return state.patterns[index].color;
+  }
+  return DEFAULT_JOB_COLORS[index % DEFAULT_JOB_COLORS.length];
+}
 
 function formatHour12(timeStr) {
   if (!timeStr) return '';
@@ -408,6 +477,7 @@ function load() {
       if (state.pattern && (!state.patterns || state.patterns.length === 0)) {
         state.patterns = [{
           name: 'Trabajo',
+          color: DEFAULT_JOB_COLORS[0],
           enabled: state.pattern.enabled || false,
           startDate: state.pattern.startDate || '2026-10-11',
           endDate: state.pattern.endDate || '',
@@ -419,6 +489,7 @@ function load() {
     if (!state.patterns || state.patterns.length === 0) {
       state.patterns = [{
         name: 'Trabajo',
+        color: DEFAULT_JOB_COLORS[0],
         enabled: false,
         startDate: '2026-10-11',
         endDate: '',
@@ -426,11 +497,28 @@ function load() {
         restDays: 3
       }];
     }
+    if (!state.manualDays) state.manualDays = {};
     if (!state.blocks || state.blocks.length === 0) state.blocks = defaultBlocks();
   } catch(e) {
     state.blocks = defaultBlocks();
     state.patterns = [];
+    state.manualDays = {};
     console.warn('No se pudo cargar', e);
+  }
+}
+
+// ==================== BORRADO TOTAL SECRETO ====================
+function triggerSecretReset() {
+  const confirmacion1 = confirm("⚠️ ¿Estás seguro de que deseas borrar ABSOLUTAMENTE TODO?\n\nSe eliminarán todos tus horarios, bloques, notas y configuraciones guardadas.");
+  if (!confirmacion1) return;
+  
+  const confirmacion2 = prompt("Para confirmar el borrado total, escribe la palabra: BORRAR");
+  if (confirmacion2 === "BORRAR" || confirmacion2 === "borrar") {
+    localStorage.removeItem(STORAGE_KEY);
+    alert("Sistema restablecido con éxito. La aplicación se recargará.");
+    location.reload();
+  } else {
+    alert("Operación cancelada. La palabra de confirmación no coincide.");
   }
 }
 
@@ -474,30 +562,46 @@ function getAvailableSubjects() {
   return Array.from(subjects);
 }
 
-function getActiveWorkLabels(iso) {
-  if (!state.patterns || state.patterns.length === 0) return [];
+function getActiveWorkLabelsWithColors(iso) {
+  const result = []; 
   const targetDate = parseISO(iso);
-  const activeLabels = [];
-  state.patterns.forEach(pat => {
-    if (!pat.enabled) return;
-    const startD = parseISO(pat.startDate);
-    if (targetDate < startD) return;
-    if (pat.endDate) {
-      const endD = parseISO(pat.endDate);
-      if (targetDate > endD) return;
-    }
-    const diffDays = Math.round((targetDate - startD) / 86400000);
-    const cycle = (+pat.workDays || 1) + (+pat.restDays || 1);
-    if (cycle <= 0) return;
-    if ((diffDays % cycle) < (+pat.workDays || 1)) {
-      activeLabels.push(pat.name || 'Trabajo');
-    }
-  });
-  return activeLabels;
+  
+  if (state.patterns && state.patterns.length > 0) {
+    state.patterns.forEach((pat, idx) => {
+      if (!pat.enabled) return;
+      const startD = parseISO(pat.startDate);
+      if (targetDate < startD) return;
+      if (pat.endDate) {
+        const endD = parseISO(pat.endDate);
+        if (targetDate > endD) return;
+      }
+      const diffDays = Math.round((targetDate - startD) / 86400000);
+      const cycle = (+pat.workDays || 1) + (+pat.restDays || 1);
+      if (cycle <= 0) return;
+      if ((diffDays % cycle) < (+pat.workDays || 1)) {
+        result.push({ name: pat.name || 'Trabajo', color: pat.color || getJobColor(idx) });
+      }
+    });
+  }
+
+  if (state.manualDays && state.manualDays[iso]) {
+    state.manualDays[iso].forEach(jobName => {
+      let matchedColor = '#e65c5c';
+      if (state.patterns) {
+        const found = state.patterns.find(p => p.name === jobName);
+        if (found) matchedColor = found.color;
+      }
+      if (!result.some(r => r.name === jobName)) {
+        result.push({ name: jobName, color: matchedColor });
+      }
+    });
+  }
+
+  return result;
 }
 
 function isWorkDay(iso) {
-  return getActiveWorkLabels(iso).length > 0;
+  return getActiveWorkLabelsWithColors(iso).length > 0;
 }
 
 function effectivePriority(iso) {
@@ -577,19 +681,27 @@ function makeCalDay(y, m, d, otherMonth) {
   el.className = 'calDay';
   if (otherMonth) el.classList.add('otherMonth');
   if (iso === toISO(new Date())) el.classList.add('today');
-  if (isWorkDay(iso)) el.classList.add('workday');
+
+  const activeWorks = getActiveWorkLabelsWithColors(iso);
+  if (activeWorks.length > 0) {
+    el.classList.add('workday');
+  }
 
   const num = document.createElement('div');
   num.className = 'dayNum'; num.textContent = d;
   el.appendChild(num);
 
+  activeWorks.forEach(w => {
+    const s = document.createElement('div');
+    s.className = 'mini';
+    s.style.backgroundColor = w.color;
+    s.style.color = '#fff';
+    s.textContent = 'T: ' + w.name;
+    el.appendChild(s);
+  });
+
   const day = state.days[iso];
   if (day) {
-    new Set(Object.values(day.trabajo)).forEach(l => {
-      const s = document.createElement('div');
-      s.className = 'mini'; s.textContent = 'T: ' + l;
-      el.appendChild(s);
-    });
     new Set(Object.values(day.estudio)).forEach(l => {
       const s = document.createElement('div');
       s.className = 'mini est'; s.textContent = 'E: ' + l;
@@ -1039,11 +1151,14 @@ function renderPatternsEditor() {
   draftPatterns.forEach((pat, i) => {
     const item = document.createElement('div');
     item.className = 'patternItem';
+    const assignedColor = pat.color || getJobColor(i);
     item.innerHTML = `
       <button class="delPat" type="button" onclick="removeDraftPattern(${i})">Eliminar</button>
       <label><input type="checkbox" class="patEnabled" ${pat.enabled ? 'checked' : ''}> Activar este trabajo</label>
       <label>Nombre del trabajo:</label>
       <input type="text" class="patName" value="${pat.name || ''}" placeholder="Ej: Trabajo A">
+      <label>Color representativo:</label>
+      <input type="color" class="patColor" value="${assignedColor}" style="width: 100%; height: 32px; background: #3a3a52; cursor: pointer;">
       <label>Fecha de inicio:</label>
       <input type="date" class="patStart" value="${pat.startDate || ''}">
       <label>Fecha de fin (opcional):</label>
@@ -1057,8 +1172,41 @@ function renderPatternsEditor() {
   });
 }
 window.removeDraftPattern = function(index) {
+  // Obtener el nombre del trabajo que estamos a punto de eliminar
+  const patToDelete = draftPatterns[index];
+  const jobName = patToDelete ? patToDelete.name : null;
+
+  // 1. Eliminarlo de la lista temporal de patrones
   draftPatterns.splice(index, 1);
   renderPatternsEditor();
+
+  // 2. Si el trabajo tenía un nombre válido, hacer una limpieza profunda en toda la app
+  if (jobName) {
+    // A. Limpiar de todos los días pintados (vista Día / celdas horarias)
+    for (const iso in state.days) {
+      const day = state.days[iso];
+      if (day && day.trabajo) {
+        for (const hourIdx in day.trabajo) {
+          if (day.trabajo[hourIdx] === jobName || day.trabajo[hourIdx].includes(jobName)) {
+            delete day.trabajo[hourIdx];
+          }
+        }
+      }
+    }
+
+    // B. Limpiar de los días sueltos / manuales
+    if (state.manualDays) {
+      for (const iso in state.manualDays) {
+        state.manualDays[iso] = state.manualDays[iso].filter(name => name !== jobName);
+        if (state.manualDays[iso].length === 0) {
+          delete state.manualDays[iso];
+        }
+      }
+    }
+
+    // C. Guardar los cambios de inmediato
+    save();
+  }
 };
 document.getElementById('openPattern').onclick = () => {
   draftPatterns = JSON.parse(JSON.stringify(state.patterns || []));
@@ -1067,27 +1215,163 @@ document.getElementById('openPattern').onclick = () => {
 };
 document.getElementById('patAddBtn').onclick = () => {
   if (draftPatterns.length >= 5) { alert('Máximo 5 trabajos.'); return; }
-  draftPatterns.push({ name: 'Trabajo ' + (draftPatterns.length + 1), enabled: true, startDate: '2026-10-11', endDate: '', workDays: 1, restDays: 3 });
+  const newIdx = draftPatterns.length;
+  draftPatterns.push({ 
+    name: 'Trabajo ' + (newIdx + 1), 
+    color: DEFAULT_JOB_COLORS[newIdx % DEFAULT_JOB_COLORS.length],
+    enabled: true, 
+    startDate: '2026-10-11', 
+    endDate: '', 
+    workDays: 1, 
+    restDays: 3 
+  });
   renderPatternsEditor();
 };
 document.getElementById('patCancel').onclick = () => patternModal.classList.remove('open');
 document.getElementById('patSave').onclick = () => {
   const items = document.querySelectorAll('.patternItem');
   const newPatterns = [];
-  items.forEach(item => {
+  items.forEach((item, idx) => {
     const enabled = item.querySelector('.patEnabled').checked;
-    const name = item.querySelector('.patName').value.trim() || 'Trabajo';
+    const name = item.querySelector('.patName').value.trim() || ('Trabajo ' + (idx + 1));
+    const color = item.querySelector('.patColor').value || DEFAULT_JOB_COLORS[idx % DEFAULT_JOB_COLORS.length];
     const startDate = item.querySelector('.patStart').value || '2026-10-11';
     const endDate = item.querySelector('.patEnd').value || '';
     const workDays = Math.max(1, +item.querySelector('.patWorkDays').value || 1);
     const restDays = Math.max(1, +item.querySelector('.patRestDays').value || 1);
-    newPatterns.push({ enabled, name, startDate, endDate, workDays, restDays });
+    newPatterns.push({ enabled, name, color, startDate, endDate, workDays, restDays });
   });
   state.patterns = newPatterns;
   save();
   patternModal.classList.remove('open');
   renderCalendar();
 };
+
+// ==================== CALENDARIO DE DÍAS SUELTOS (MANUALES) ====================
+const manualDaysModal = document.getElementById('manualDaysModal');
+
+function getActiveJobNamesList() {
+  const names = [];
+  if (state.patterns && state.patterns.length > 0) {
+    state.patterns.forEach(p => { if (p.name) names.push(p.name); });
+  }
+  if (names.length === 0) names.push('Trabajo');
+  return names;
+}
+
+document.getElementById('openManualDaysModal').onclick = () => {
+  const select = document.getElementById('manualJobSelect');
+  select.innerHTML = '';
+  const names = getActiveJobNamesList();
+  names.forEach(n => {
+    const opt = document.createElement('option');
+    opt.value = n;
+    opt.textContent = n;
+    select.appendChild(opt);
+  });
+
+  const hoy = new Date();
+  manYear = hoy.getFullYear();
+  manMonth = hoy.getMonth();
+  renderManualCalendar();
+  patternModal.classList.remove('open');
+  manualDaysModal.classList.add('open');
+};
+
+document.getElementById('closeManualModal').onclick = () => {
+  manualDaysModal.classList.remove('open');
+  patternModal.classList.add('open');
+  renderCalendar();
+};
+
+document.getElementById('manPrevMonth').onclick = () => {
+  manMonth--; if (manMonth < 0) { manMonth = 11; manYear--; } renderManualCalendar();
+};
+document.getElementById('manNextMonth').onclick = () => {
+  manMonth++; if (manMonth > 11) { manMonth = 0; manYear++; } renderManualCalendar();
+};
+
+function renderManualCalendar() {
+  const grid = document.getElementById('manualCalGrid');
+  grid.innerHTML = '';
+  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  document.getElementById('manMonthLabel').textContent = `${meses[manMonth]} ${manYear}`;
+
+  ['Lun','Mar','Mi\u00e9','Jue','Vie','S\u00e1b','Dom'].forEach(n => {
+    const el = document.createElement('div');
+    el.className = 'manualDayName'; el.textContent = n;
+    grid.appendChild(el);
+  });
+
+  const first = new Date(manYear, manMonth, 1);
+  let startCol = first.getDay();
+  startCol = (startCol === 0) ? 6 : startCol - 1;
+
+  const daysInMonth = new Date(manYear, manMonth+1, 0).getDate();
+  const prevMonthDays = new Date(manYear, manMonth, 0).getDate();
+
+  for (let i = startCol - 1; i >= 0; i--) {
+    grid.appendChild(makeManualDayCell(manYear, manMonth - 1, prevMonthDays - i, true));
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    grid.appendChild(makeManualDayCell(manYear, manMonth, d, false));
+  }
+  const remaining = (7 - ((startCol + daysInMonth) % 7)) % 7;
+  for (let d = 1; d <= remaining; d++) {
+    grid.appendChild(makeManualDayCell(manYear, manMonth + 1, d, true));
+  }
+}
+
+function makeManualDayCell(y, m, d, otherMonth) {
+  const date = new Date(y, m, d);
+  const iso = toISO(date);
+  const el = document.createElement('div');
+  el.className = 'manualDayCell';
+  if (otherMonth) el.classList.add('otherMonth');
+
+  const num = document.createElement('div');
+  num.className = 'mNum'; num.textContent = d;
+  el.appendChild(num);
+
+  const marksContainer = document.createElement('div');
+  marksContainer.className = 'manualDayMarks';
+
+  if (state.manualDays && state.manualDays[iso]) {
+    state.manualDays[iso].forEach(jobName => {
+      let dotColor = '#e65c5c';
+      if (state.patterns) {
+        const found = state.patterns.find(p => p.name === jobName);
+        if (found) dotColor = found.color;
+      }
+      const dot = document.createElement('span');
+      dot.className = 'manualMarkDot';
+      dot.style.backgroundColor = dotColor;
+      dot.title = jobName;
+      marksContainer.appendChild(dot);
+    });
+  }
+  el.appendChild(marksContainer);
+
+  el.onclick = () => {
+    const selectedJob = document.getElementById('manualJobSelect').value;
+    if (!selectedJob) return;
+
+    if (!state.manualDays) state.manualDays = {};
+    if (!state.manualDays[iso]) state.manualDays[iso] = [];
+
+    const idx = state.manualDays[iso].indexOf(selectedJob);
+    if (idx >= 0) {
+      state.manualDays[iso].splice(idx, 1);
+      if (state.manualDays[iso].length === 0) delete state.manualDays[iso];
+    } else {
+      state.manualDays[iso].push(selectedJob);
+    }
+    save();
+    renderManualCalendar();
+  };
+
+  return el;
+}
 
 function applyPatternsToRange(startD, endD) {
   const hasActive = state.patterns.some(p => p.enabled);
@@ -1097,9 +1381,9 @@ function applyPatternsToRange(startD, endD) {
   while (curr <= endD) {
     const iso = toISO(curr);
     const day = getDay(iso);
-    const workLabels = getActiveWorkLabels(iso);
+    const workLabels = getActiveWorkLabelsWithColors(iso);
     if (workLabels.length > 0) {
-      const mainLabel = workLabels.join(' / ');
+      const mainLabel = workLabels.map(w => w.name).join(' / ');
       for (let h = 0; h < total; h++) day.trabajo[h] = mainLabel;
     } else {
       day.trabajo = {};
@@ -1236,10 +1520,26 @@ renderCalendar();
 </script>
 <script>
 // ==================== REGISTRO DE PWA ====================
+let newWorker;
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
-      .then(reg => console.log('Service Worker registrado con éxito:', reg.scope))
+      .then(reg => {
+        console.log('Service Worker registrado con éxito:', reg.scope);
+        // Detectar si hay una nueva versión esperando en segundo plano
+        reg.addEventListener('updatefound', () => {
+          newWorker = reg.installing;
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              // Notificar sutilmente o recargar para aplicar actualización de GitHub
+              if (confirm("¡Hay una nueva actualización disponible! ¿Deseas actualizar ahora?")) {
+                newWorker.postMessage({ action: 'skipWaiting' });
+                window.location.reload();
+              }
+            }
+          });
+        });
+      })
       .catch(err => console.log('Error al registrar el Service Worker:', err));
   });
 }
