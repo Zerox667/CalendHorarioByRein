@@ -1,4 +1,4 @@
-const CACHE_NAME = 'HorarioCalend-pwa-v3';
+const CACHE_NAME = 'HorarioCalend-pwa-v4';
 const ASSETS = [
   './',
   './index.html',
