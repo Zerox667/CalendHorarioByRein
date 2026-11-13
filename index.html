@@ -159,6 +159,10 @@
   .modalBox .row { display: flex; gap: 8px; margin-top: 15px; }
   .hint { font-size: 12px; color: #aaa; }
 
+  /* MODAL DE ALERTA PERSONALIZADO */
+  #customAlertModal .modalBox { max-width: 380px; text-align: center; }
+  #customAlertText { font-size: 14px; margin: 15px 0; color: #f0f0f0; line-height: 1.4; }
+
   .evalItemRow, .noteItemRow { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; font-size: 12px; background: #2f2f45; padding: 5px 8px; border-radius: 4px; }
   .evalItemRow.done span { text-decoration: line-through; color: #888; }
   .evalItemRow input[type=checkbox] { cursor: pointer; }
@@ -218,15 +222,11 @@
     <button id="secretResetBtn" title="Restablecer sistema" onclick="triggerSecretReset()">⚙</button>
   </h1>
   <button id="tabCalendar" class="tab active">Calendario</button>
-  <button id="tabDay" class="tab">D&iacute;a</button>
   <button id="tabWeek" class="tab">Semana</button>
+  <button id="tabDay" class="tab">D&iacute;a</button>
   <button id="lockBtn" class="lock-active" title="Bloquear o desbloquear edici&oacute;n">&#128275; Bloqueado (Solo ver)</button>
-  <select id="globalPriority">
-    <option value="trabajo">Prioridad global: Trabajo</option>
-    <option value="estudio">Prioridad global: Estudio</option>
-  </select>
   <button id="openSubjects" style="background:#2a3a4a; border-color:#4a6a8a;">Configurar Materias</button>
-  <button id="openBlocks">Bloques horarios</button>
+  <button id="openBlocks" style="display:none;">Bloques horarios</button>
   <button id="exportBtn">Exportar</button>
   <button id="importBtn">Importar</button>
   <input type="file" id="importFile" style="display:none" accept=".json">
@@ -245,7 +245,7 @@
       <select id="calFilterWork" title="Filtrar trabajo / usuario" style="background:#3a3a52; color:#e0e0e0; border:1px solid #555; border-radius:4px; padding:6px;">
         <option value="">Mostrar: Todos</option>
       </select>
-      <button id="openPattern">Configurar patrones</button>
+      <button id="openPattern" style="background:#4a2a6a; border-color:#7a4abf;">Configurar patrones</button>
       <button id="applyPattern">Aplicar al mes</button>
       <button id="applyPatternYear">Aplicar al a&ntilde;o</button>
       <button id="exportCalImg" style="background:#2a4a3e; border-color:#3a6a5a;">Guardar Calendario (Imagen)</button>
@@ -262,9 +262,8 @@
     <div style="display:flex; gap:8px; align-items:center;">
       <button id="openDayNotesModal" style="background:#4a7c59; border:none; font-weight:bold;">+ Notas y Evaluaciones</button>
       <select id="dayPriority">
-        <option value="">Usar prioridad global</option>
-        <option value="trabajo">Este d&iacute;a gana Trabajo</option>
-        <option value="estudio">Este d&iacute;a gana Estudio</option>
+        <option value="trabajo">Prioridad día: Trabajo</option>
+        <option value="estudio">Prioridad día: Estudio</option>
       </select>
     </div>
   </div>
@@ -434,7 +433,72 @@
   </div>
 </div>
 
+<!-- Modal de Alerta / Mensaje Personalizado -->
+<div id="customAlertModal" class="modal">
+  <div class="modalBox">
+    <h3 id="customAlertTitle" style="color: #ffb84d; margin-bottom: 5px;">Aviso</h3>
+    <div id="customAlertText"></div>
+    <div class="row" style="margin-top: 15px;">
+      <button id="customAlertOkBtn" style="width: 100%; background: #4a7c59; border-color: #6abf7a;">Aceptar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Confirmación Personalizado -->
+<div id="customConfirmModal" class="modal">
+  <div class="modalBox" style="max-width: 380px; text-align: center;">
+    <h3 style="color: #ffcc66; margin-bottom: 5px;">Confirmación</h3>
+    <div id="customConfirmText" style="font-size: 14px; margin: 15px 0; color: #f0f0f0; line-height: 1.4;"></div>
+    <div class="row" style="margin-top: 15px; display: flex; gap: 10px;">
+      <button id="customConfirmYesBtn" style="flex: 1; background: #4a7c59; border-color: #6abf7a;">Sí</button>
+      <button id="customConfirmNoBtn" style="flex: 1; background: #6a2a2a; border-color: #8a3a3a;">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <script>
+// ==================== MODALES PERSONALIZADOS (REEMPLAZO DE ALERT/CONFIRM) ====================
+function showAppAlert(message, title = "Aviso") {
+  return new Promise((resolve) => {
+    document.getElementById('customAlertTitle').textContent = title;
+    document.getElementById('customAlertText').textContent = message;
+    const modal = document.getElementById('customAlertModal');
+    modal.classList.add('open');
+    
+    const okBtn = document.getElementById('customAlertOkBtn');
+    const handler = () => {
+      modal.classList.remove('open');
+      okBtn.removeEventListener('click', handler);
+      resolve(true);
+    };
+    okBtn.addEventListener('click', handler);
+  });
+}
+
+function showAppConfirm(message) {
+  return new Promise((resolve) => {
+    document.getElementById('customConfirmText').textContent = message;
+    const modal = document.getElementById('customConfirmModal');
+    modal.classList.add('open');
+    
+    const yesBtn = document.getElementById('customConfirmYesBtn');
+    const noBtn = document.getElementById('customConfirmNoBtn');
+    
+    const cleanup = (result) => {
+      modal.classList.remove('open');
+      yesBtn.removeEventListener('click', yesHandler);
+      noBtn.removeEventListener('click', noHandler);
+      resolve(result);
+    };
+    
+    const yesHandler = () => cleanup(true);
+    const noHandler = () => cleanup(false);
+    
+    yesBtn.addEventListener('click', yesHandler);
+    noBtn.addEventListener('click', noHandler);
+  });
+}
+
 // ==================== ESTADO ====================
 const STORAGE_KEY = 'miHorario_v1';
 let state = {
@@ -545,24 +609,24 @@ function load() {
 }
 
 // ==================== BORRADO TOTAL SECRETO ====================
-function triggerSecretReset() {
-  const confirmacion1 = confirm("⚠️ ¿Estás seguro de que deseas borrar ABSOLUTAMENTE TODO?\n\nSe eliminarán todos tus horarios, bloques, notas y configuraciones guardadas.");
+async function triggerSecretReset() {
+  const confirmacion1 = await showAppConfirm("⚠️ ¿Estás seguro de que deseas borrar ABSOLUTAMENTE TODO?\n\nSe eliminarán todos tus horarios, bloques, notas y configuraciones guardadas.");
   if (!confirmacion1) return;
   
   const confirmacion2 = prompt("Para confirmar el borrado total, escribe la palabra: BORRAR");
   if (confirmacion2 === "BORRAR" || confirmacion2 === "borrar") {
     localStorage.removeItem(STORAGE_KEY);
-    alert("Sistema restablecido con éxito. La aplicación se recargará.");
+    await showAppAlert("Sistema restablecido con éxito. La aplicación se recargará.");
     location.reload();
   } else {
-    alert("Operación cancelada. La palabra de confirmación no coincide.");
+    await showAppAlert("Operación cancelada. La palabra de confirmación no coincide.");
   }
 }
 
 // ==================== GESTIÓN DE SALIDA SEGURA (BOTÓN ATRÁS PWA) ====================
 window.history.pushState({ page: 'home' }, '', '');
-window.addEventListener('popstate', (e) => {
-  const salir = confirm("¿Deseas salir de la aplicación?");
+window.addEventListener('popstate', async (e) => {
+  const salir = await showAppConfirm("¿Deseas salir de la aplicación?");
   if (salir) {
     window.history.back();
   } else {
@@ -922,6 +986,10 @@ function openDay(iso) {
   document.getElementById('tabCalendar').classList.remove('active');
   document.getElementById('tabWeek').classList.remove('active');
   document.getElementById('tabDay').classList.add('active');
+  
+  // Mostrar botón bloques horarios en vista Día
+  document.getElementById('openBlocks').style.display = 'inline-block';
+
   populateDaySelects();
   renderDay();
 }
@@ -929,7 +997,7 @@ function openDay(iso) {
 function renderDay() {
   document.getElementById('dayTitle').textContent = formatDate(currentDate);
   const day = getDay(currentDate);
-  document.getElementById('dayPriority').value = day.priority || '';
+  document.getElementById('dayPriority').value = day.priority || state.globalPriority;
 
   const cols = document.getElementById('cols');
   cols.innerHTML = '';
@@ -1021,9 +1089,9 @@ function renderSubjectsEditor() {
   });
 }
 
-window.removeDraftSubject = function(index) {
+window.removeDraftSubject = async function(index) {
   const subName = draftSubjects[index] ? draftSubjects[index].name : '';
-  const confirmar = confirm(`¿Estás seguro de eliminar la materia "${subName}"?\n\nNota: Si ya estaba pintada en algunos días, se limpiará su etiqueta.`);
+  const confirmar = await showAppConfirm(`¿Estás seguro de eliminar la materia "${subName}"?\n\nNota: Si ya estaba pintada en algunos días, se limpiará su etiqueta.`);
   if (!confirmar) return;
 
   draftSubjects.splice(index, 1);
@@ -1036,8 +1104,8 @@ document.getElementById('openSubjects').onclick = () => {
   subjectsModal.classList.add('open');
 };
 
-document.getElementById('subAddBtn').onclick = () => {
-  if (draftSubjects.length >= 15) { alert('Máximo 15 materias.'); return; }
+document.getElementById('subAddBtn').onclick = async () => {
+  if (draftSubjects.length >= 15) { await showAppAlert('Máximo 15 materias.'); return; }
   const newIdx = draftSubjects.length;
   draftSubjects.push({ 
     name: 'Materia ' + (newIdx + 1), 
@@ -1048,7 +1116,7 @@ document.getElementById('subAddBtn').onclick = () => {
 
 document.getElementById('subCancel').onclick = () => subjectsModal.classList.remove('open');
 
-document.getElementById('subSave').onclick = () => {
+document.getElementById('subSave').onclick = async () => {
   const items = document.querySelectorAll('.subjectItem');
   const newSubjects = [];
   const currentNames = new Set();
@@ -1060,7 +1128,6 @@ document.getElementById('subSave').onclick = () => {
     const color = item.querySelector('.subColor').value || DEFAULT_SUB_COLORS[idx % DEFAULT_SUB_COLORS.length];
     
     if (!name) {
-      alert('El nombre de la materia no puede estar vacío.');
       hasError = true;
       return;
     }
@@ -1068,7 +1135,10 @@ document.getElementById('subSave').onclick = () => {
     currentNames.add(name);
   });
 
-  if (hasError) return;
+  if (hasError) {
+    await showAppAlert('El nombre de la materia no puede estar vacío.');
+    return;
+  }
 
   for (const iso in state.days) {
     const day = state.days[iso];
@@ -1087,15 +1157,15 @@ document.getElementById('subSave').onclick = () => {
   populateDaySelects();
   renderDay();
   renderCalendar();
-  alert('Materias guardadas y actualizadas con éxito.');
+  await showAppAlert('Materias guardadas y actualizadas con éxito.');
 };
 
 // ==================== APLICAR HORAS DE TRABAJO A SUS DÍAS ====================
-document.getElementById('applyWorkHoursToPatternDays').onclick = () => {
+document.getElementById('applyWorkHoursToPatternDays').onclick = async () => {
   if (isLocked) return;
   const selectedJob = document.getElementById('dayWorkSelect').value;
   if (!selectedJob) {
-    alert('Selecciona un trabajo en el menú desplegable.');
+    await showAppAlert('Selecciona un trabajo en el menú desplegable.');
     return;
   }
 
@@ -1142,9 +1212,9 @@ document.getElementById('applyWorkHoursToPatternDays').onclick = () => {
   renderDay();
   renderCalendar();
   if (Object.keys(hoursTemplate).length === 0) {
-    alert(`Se limpiaron las horas de "${selectedJob}" en todos sus ${updatedCount} días asignados del año.`);
+    await showAppAlert(`Se limpiaron las horas de "${selectedJob}" en todos sus ${updatedCount} días asignados del año.`);
   } else {
-    alert(`Horario de "${selectedJob}" aplicado a todos sus ${updatedCount} días laborables.`);
+    await showAppAlert(`Horario de "${selectedJob}" aplicado a todos sus ${updatedCount} días laborables.`);
   }
 };
 
@@ -1233,10 +1303,10 @@ window.deleteModalNote = function(iso, index) {
   openDayNotesModalFor(iso);
 };
 
-document.getElementById('saveModalNoteBtn').onclick = () => {
+document.getElementById('saveModalNoteBtn').onclick = async () => {
   if (isLocked) return;
   const val = document.getElementById('modalNoteInput').value.trim();
-  if (!val) { alert('Escribe contenido para la nota.'); return; }
+  if (!val) { await showAppAlert('Escribe contenido para la nota.'); return; }
   const day = getDay(modalTargetISO);
   day.notes.push(val);
   save();
@@ -1263,11 +1333,11 @@ document.getElementById('openAddEvalModal').onclick = () => {
   evalModal.classList.add('open');
 };
 document.getElementById('evalCancelBtn').onclick = () => evalModal.classList.remove('open');
-document.getElementById('evalSaveBtn').onclick = () => {
+document.getElementById('evalSaveBtn').onclick = async () => {
   const subject = document.getElementById('evalSubjectSelect').value;
   const title = document.getElementById('evalTitleInput').value.trim();
-  if (!subject) { alert('Selecciona una materia.'); return; }
-  if (!title) { alert('Escribe el título de la evaluación.'); return; }
+  if (!subject) { await showAppAlert('Selecciona una materia.'); return; }
+  if (!title) { await showAppAlert('Escribe el título de la evaluación.'); return; }
 
   const day = getDay(modalTargetISO);
   day.evaluations.push({ subject, title, done: false });
@@ -1398,7 +1468,7 @@ function applyPaint(idx) {
   renderDay();
 }
 
-document.addEventListener('dblclick', e => {
+document.addEventListener('dblclick', async e => {
   if (isLocked) return;
   if (!document.getElementById('dayView').classList.contains('active-view')) return;
   const cell = e.target.closest('.cell');
@@ -1429,8 +1499,11 @@ document.getElementById('tabCalendar').onclick = () => {
   document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active-view'));
   document.getElementById('calendarView').classList.add('active-view');
   document.getElementById('tabCalendar').classList.add('active');
-  document.getElementById('tabDay').classList.remove('active');
   document.getElementById('tabWeek').classList.remove('active');
+  document.getElementById('tabDay').classList.remove('active');
+  
+  // Ocultar botón bloques horarios en vista Calendario
+  document.getElementById('openBlocks').style.display = 'none';
   renderCalendar();
 };
 
@@ -1445,6 +1518,9 @@ document.getElementById('tabWeek').onclick = () => {
   document.getElementById('tabCalendar').classList.remove('active');
   document.getElementById('tabDay').classList.remove('active');
   document.getElementById('tabWeek').classList.add('active');
+  
+  // Mostrar botón bloques horarios en vista Semana
+  document.getElementById('openBlocks').style.display = 'inline-block';
   renderWeek();
 };
 
@@ -1473,9 +1549,7 @@ document.getElementById('weekToday').onclick = () => {
   renderWeek();
 };
 document.getElementById('backToCal').onclick = () => document.getElementById('tabCalendar').click();
-document.getElementById('globalPriority').onchange = e => {
-  state.globalPriority = e.target.value; save(); renderDay();
-};
+
 document.getElementById('dayPriority').onchange = e => {
   if (isLocked) return;
   getDay(currentDate).priority = e.target.value; save(); renderDay();
@@ -1518,7 +1592,7 @@ function renderPatternsEditor() {
       <button class="delPat" type="button" onclick="removeDraftPattern(${i})">Eliminar</button>
       <label><input type="checkbox" class="patEnabled" ${pat.enabled ? 'checked' : ''}> Activar este trabajo</label>
       <label>Nombre del trabajo:</label>
-      <input type="text" class="patName" value="${pat.name || ''}" placeholder="Ej: Trabajo A">
+      <input type="text" class="patName" value="${pat.name || ''}" placeholder="Ej: Trabajo A" data-orig-name="${pat.name || ''}">
       <label>Color representativo:</label>
       <input type="color" class="patColor" value="${assignedColor}" style="width: 100%; height: 32px; background: #3a3a52; cursor: pointer;">
       <label>Fecha de inicio:</label>
@@ -1533,7 +1607,7 @@ function renderPatternsEditor() {
     container.appendChild(item);
   });
 }
-window.removeDraftPattern = function(index) {
+window.removeDraftPattern = async function(index) {
   const patToDelete = draftPatterns[index];
   const jobName = patToDelete ? patToDelete.name : null;
 
@@ -1572,8 +1646,8 @@ document.getElementById('openPattern').onclick = () => {
   renderPatternsEditor();
   patternModal.classList.add('open');
 };
-document.getElementById('patAddBtn').onclick = () => {
-  if (draftPatterns.length >= 5) { alert('Máximo 5 trabajos.'); return; }
+document.getElementById('patAddBtn').onclick = async () => {
+  if (draftPatterns.length >= 5) { await showAppAlert('Máximo 5 trabajos.'); return; }
   const newIdx = draftPatterns.length;
   draftPatterns.push({ 
     name: 'Trabajo ' + (newIdx + 1), 
@@ -1587,23 +1661,72 @@ document.getElementById('patAddBtn').onclick = () => {
   renderPatternsEditor();
 };
 document.getElementById('patCancel').onclick = () => patternModal.classList.remove('open');
-document.getElementById('patSave').onclick = () => {
+
+document.getElementById('patSave').onclick = async () => {
   const items = document.querySelectorAll('.patternItem');
   const newPatterns = [];
+  const nameChanges = {};
+
   items.forEach((item, idx) => {
     const enabled = item.querySelector('.patEnabled').checked;
-    const name = item.querySelector('.patName').value.trim() || ('Trabajo ' + (idx + 1));
+    const nameInput = item.querySelector('.patName');
+    const newName = nameInput.value.trim() || ('Trabajo ' + (idx + 1));
+    const origName = nameInput.getAttribute('data-orig-name');
+
+    if (origName && origName !== newName) {
+      nameChanges[origName] = newName;
+    }
+
     const color = item.querySelector('.patColor').value || DEFAULT_JOB_COLORS[idx % DEFAULT_JOB_COLORS.length];
     const startDate = item.querySelector('.patStart').value || '2026-10-11';
     const endDate = item.querySelector('.patEnd').value || '';
     const workDays = Math.max(1, +item.querySelector('.patWorkDays').value || 1);
     const restDays = Math.max(1, +item.querySelector('.patRestDays').value || 1);
-    newPatterns.push({ enabled, name, color, startDate, endDate, workDays, restDays });
+    newPatterns.push({ enabled, name: newName, color, startDate, endDate, workDays, restDays });
   });
+
+  if (Object.keys(nameChanges).length > 0 && state.jobHourTemplates) {
+    for (const oldName in nameChanges) {
+      const newName = nameChanges[oldName];
+      if (state.jobHourTemplates[oldName]) {
+        state.jobHourTemplates[newName] = state.jobHourTemplates[oldName];
+        delete state.jobHourTemplates[oldName];
+      }
+    }
+  }
+
+  if (Object.keys(nameChanges).length > 0) {
+    for (const iso in state.days) {
+      const day = state.days[iso];
+      if (day && day.trabajo) {
+        for (const h in day.trabajo) {
+          const currentVal = day.trabajo[h];
+          for (const oldName in nameChanges) {
+            if (currentVal === oldName) {
+              day.trabajo[h] = nameChanges[oldName];
+            }
+          }
+        }
+      }
+    }
+
+    if (state.manualDays) {
+      for (const iso in state.manualDays) {
+        state.manualDays[iso] = state.manualDays[iso].map(jobName => {
+          for (const oldName in nameChanges) {
+            if (jobName === oldName) return nameChanges[oldName];
+          }
+          return jobName;
+        });
+      }
+    }
+  }
+
   state.patterns = newPatterns;
   save();
   patternModal.classList.remove('open');
   renderCalendar();
+  await showAppAlert('Patrones guardados y actualizados correctamente.');
 };
 
 // ==================== CALENDARIO DE DÍAS SUELTOS (MANUALES) ====================
@@ -1732,9 +1855,9 @@ function makeManualDayCell(y, m, d, otherMonth) {
   return el;
 }
 
-function applyPatternsToRange(startD, endD) {
+async function applyPatternsToRange(startD, endD) {
   const hasActive = state.patterns.some(p => p.enabled);
-  if (!hasActive) { alert('Primero activa al menos un patrón.'); return; }
+  if (!hasActive) { await showAppAlert('Primero activa al menos un patrón.'); return; }
   let curr = new Date(startD);
   while (curr <= endD) {
     const iso = toISO(curr);
@@ -1757,13 +1880,13 @@ function applyPatternsToRange(startD, endD) {
   save();
   renderCalendar();
 }
-document.getElementById('applyPattern').onclick = () => {
-  applyPatternsToRange(new Date(calYear, calMonth, 1), new Date(calYear, calMonth + 1, 0));
-  alert('Patrones aplicados al mes visible.');
+document.getElementById('applyPattern').onclick = async () => {
+  await applyPatternsToRange(new Date(calYear, calMonth, 1), new Date(calYear, calMonth + 1, 0));
+  await showAppAlert('Patrones aplicados al mes visible.');
 };
-document.getElementById('applyPatternYear').onclick = () => {
-  applyPatternsToRange(new Date(calYear, 0, 1), new Date(calYear, 11, 31));
-  alert('Patrones aplicados a todo el año ' + calYear + '.');
+document.getElementById('applyPatternYear').onclick = async () => {
+  await applyPatternsToRange(new Date(calYear, 0, 1), new Date(calYear, 11, 31));
+  await showAppAlert('Patrones aplicados a todo el año ' + calYear + '.');
 };
 
 // ==================== REPETIR ESTUDIO ====================
@@ -1782,12 +1905,12 @@ document.getElementById('repeatStudy').onclick = () => {
   repeatModal.classList.add('open');
 };
 document.getElementById('repCancel').onclick = () => repeatModal.classList.remove('open');
-document.getElementById('repSave').onclick = () => {
+document.getElementById('repSave').onclick = async () => {
   const start = document.getElementById('repStart').value;
   const end = document.getElementById('repEndStudy').value;
   const overwrite = document.getElementById('repOverwrite').checked;
-  if (!start || !end) { alert('Faltan fechas.'); return; }
-  if (start > end) { alert('Inicio debe ser anterior a fin.'); return; }
+  if (!start || !end) { await showAppAlert('Faltan fechas.'); return; }
+  if (start > end) { await showAppAlert('Inicio debe ser anterior a fin.'); return; }
   const src = getDay(currentDate).estudio;
   const wd = parseISO(currentDate).getDay();
   let d = parseISO(start);
@@ -1811,7 +1934,7 @@ document.getElementById('repSave').onclick = () => {
     d.setDate(d.getDate() + 1);
   }
   save(); repeatModal.classList.remove('open');
-  alert('Estudio copiado a ' + count + ' días.');
+  await showAppAlert('Estudio copiado a ' + count + ' días.');
   renderCalendar();
 };
 
@@ -1842,17 +1965,19 @@ document.getElementById('blkAdd').onclick = () => {
   draftBlocks.push({ id: 'b' + Date.now(), ini: last ? last.fin : '00:00', fin: last ? last.fin : '00:00', label: '' });
   renderBlocksEditor();
 };
-document.getElementById('blkDefaults').onclick = () => {
-  if (!confirm('¿Restaurar 24h?')) return;
+document.getElementById('blkDefaults').onclick = async () => {
+  if (!await showAppConfirm('¿Restaurar 24h?')) return;
   draftBlocks = defaultBlocks();
   renderBlocksEditor();
 };
 document.getElementById('blkCancel').onclick = () => blocksModal.classList.remove('open');
-document.getElementById('blkSave').onclick = () => {
-  if (draftBlocks.length === 0) { alert('Añade un bloque.'); return; }
+document.getElementById('blkSave').onclick = async () => {
+  if (draftBlocks.length === 0) { await showAppAlert('Añade un bloque.'); return; }
   state.blocks = JSON.parse(JSON.stringify(draftBlocks));
-  save(); blocksModal.classList.remove('open'); renderDay();
-  alert('Bloques guardados.');
+  save(); blocksModal.classList.remove('open'); 
+  if (document.getElementById('dayView').classList.contains('active-view')) renderDay();
+  else if (document.getElementById('weekView').classList.contains('active-view')) renderWeek();
+  await showAppAlert('Bloques guardados.');
 };
 
 // ==================== EXPORTAR / IMPORTAR ====================
@@ -1866,13 +1991,13 @@ document.getElementById('importBtn').onclick = () => document.getElementById('im
 document.getElementById('importFile').onchange = e => {
   const file = e.target.files[0]; if (!file) return;
   const reader = new FileReader();
-  reader.onload = ev => {
+  reader.onload = async ev => {
     try {
         state = Object.assign(state, JSON.parse(ev.target.result));
         if (!state.blocks || state.blocks.length === 0) state.blocks = defaultBlocks();
         save(); renderCalendar();
-        alert('Datos importados.');
-    } catch(err) { alert('Archivo inválido.'); }
+        await showAppAlert('Datos importados.');
+    } catch(err) { await showAppAlert('Archivo inválido.'); }
   };
   reader.readAsText(file);
 };
@@ -1882,7 +2007,6 @@ load();
 const hoy = new Date();
 calYear = hoy.getFullYear();
 calMonth = hoy.getMonth();
-document.getElementById('globalPriority').value = state.globalPriority;
 renderCalendar();
 </script>
 <script>
@@ -1897,10 +2021,12 @@ if ('serviceWorker' in navigator) {
           newWorker = reg.installing;
           newWorker.addEventListener('statechange', () => {
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              if (confirm("¡Hay una nueva actualización disponible! ¿Deseas actualizar ahora?")) {
-                newWorker.postMessage({ action: 'skipWaiting' });
-                window.location.reload();
-              }
+              showAppConfirm("¡Hay una nueva actualización disponible! ¿Deseas actualizar ahora?").then(res => {
+                if (res) {
+                  newWorker.postMessage({ action: 'skipWaiting' });
+                  window.location.reload();
+                }
+              });
             }
           });
         });
