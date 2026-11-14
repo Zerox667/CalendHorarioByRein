@@ -74,8 +74,7 @@
   .calDay.otherMonth { opacity: 0.3; }
   .calDay.today { border-color: #ffb84d; }
   .calDay .dayNum { font-weight: bold; font-size: 14px; margin-bottom: 2px; }
-  .calDay .mini { font-size: 9px; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 1px 3px; border-radius: 3px; }
-  .calDay .mini.est { color: #fff; }
+  .calDay .mini { font-size: 9px; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 1px 3px; border-radius: 3px; color: #fff; }
   .calDay .mini.eval { color: #ffcc66; font-weight: bold; background: #443b22; }
   .calDay .mini.note { color: #cc99ff; font-style: italic; background: #332244; }
 
@@ -102,15 +101,10 @@
     display: flex; align-items: center; padding: 0 4px;
     font-size: 10px; overflow: hidden;
     white-space: nowrap; text-overflow: ellipsis;
-    user-select: none; position: relative;
+    user-select: none; position: relative; color: #fff;
   }
-  .cell.trabajo { background: #5c3535; border-color: #8a4a4a; }
-  .cell.estudio { background: #354a5c; border-color: #4a6a8a; color: #fff; }
+  .cell.estudio { background: #354a5c; border-color: #4a6a8a; }
   .cell.resultado { cursor: default; }
-  .cell.resultado.win-t { background: #5c3535; border-color: #8a4a4a; }
-  .cell.resultado.win-e { background: #354a5c; border-color: #4a6a8a; color: #fff; }
-  .cell.resultado.conflict-t { background: #6a3a2a; border-color: #a85a4a; }
-  .cell.resultado.conflict-e { background: #2a3a5c; border-color: #4a5aa8; color: #fff; }
 
   .brushBar { display: flex; gap: 6px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; font-size: 12px; }
   .dayTools { margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap; }
@@ -142,10 +136,8 @@
     border: 1px solid #333; cursor: pointer;
     font-size: 8px; overflow: hidden;
     white-space: nowrap; text-overflow: ellipsis;
-    padding: 0 2px; line-height: 18px; position: relative;
+    padding: 0 2px; line-height: 18px; position: relative; color: #fff;
   }
-  .weekCell.trabajo { background: #5c3535; border-color: #8a4a4a; }
-  .weekCell.estudio { background: #354a5c; border-color: #4a6a8a; color: #fff; }
   .weekCell.mixed { background: #3a3a52; border-color: #666; }
 
   /* MODALES Y ELEMENTOS AUXILIARES */
@@ -242,12 +234,10 @@
       <button id="calCurrentMonth">Mes actual</button>
     </div>
     <div class="calHeaderGroup">
-      <select id="calFilterWork" title="Filtrar trabajo / usuario" style="background:#3a3a52; color:#e0e0e0; border:1px solid #555; border-radius:4px; padding:6px;">
+      <select id="calFilterWork" class="globalWorkFilter" title="Filtrar trabajo / usuario" style="background:#3a3a52; color:#e0e0e0; border:1px solid #555; border-radius:4px; padding:6px;">
         <option value="">Mostrar: Todos</option>
       </select>
       <button id="openPattern" style="background:#4a2a6a; border-color:#7a4abf;">Configurar patrones</button>
-      <button id="applyPattern">Aplicar al mes</button>
-      <button id="applyPatternYear">Aplicar al a&ntilde;o</button>
       <button id="exportCalImg" style="background:#2a4a3e; border-color:#3a6a5a;">Guardar Calendario (Imagen)</button>
     </div>
   </div>
@@ -260,6 +250,9 @@
     <button id="backToCal">&laquo; Volver al calendario</button>
     <h2 id="dayTitle">&mdash;</h2>
     <div style="display:flex; gap:8px; align-items:center;">
+      <select id="dayFilterWork" class="globalWorkFilter" title="Filtrar trabajo" style="background:#3a3a52; color:#e0e0e0; border:1px solid #555; border-radius:4px; padding:6px;">
+        <option value="">Mostrar: Todos</option>
+      </select>
       <button id="openDayNotesModal" style="background:#4a7c59; border:none; font-weight:bold;">+ Notas y Evaluaciones</button>
       <select id="dayPriority">
         <option value="trabajo">Prioridad día: Trabajo</option>
@@ -269,7 +262,7 @@
   </div>
 
   <div class="brushBar">
-    <label>Trabajo:</label>
+    <label>Trabajo (Pincel):</label>
     <select id="dayWorkSelect"></select>
     <label>Estudio (Materia):</label>
     <select id="daySubjectSelect"></select>
@@ -292,13 +285,16 @@
 <!-- VISTA SEMANAL -->
 <div id="weekView" class="view-section">
   <div class="weekHeader">
-    <div>
+    <div style="display:flex; gap:8px; align-items:center;">
       <button id="prevWeek">&laquo;</button>
-      <span id="weekLabel" style="font-size:16px; font-weight:bold; margin:0 12px;"></span>
+      <span id="weekLabel" style="font-size:16px; font-weight:bold; margin:0 6px;"></span>
       <button id="nextWeek">&raquo;</button>
-    </div>
-    <div style="display:flex; gap:8px;">
       <button id="weekToday">Ir a semana actual</button>
+    </div>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <select id="weekFilterWork" class="globalWorkFilter" title="Filtrar trabajo" style="background:#3a3a52; color:#e0e0e0; border:1px solid #555; border-radius:4px; padding:6px;">
+        <option value="">Mostrar: Todos</option>
+      </select>
       <button id="exportWeekImg" style="background:#2a4a3e; border-color:#3a6a5a;">Guardar Semana (Imagen)</button>
     </div>
   </div>
@@ -451,13 +447,13 @@
     <div id="customConfirmText" style="font-size: 14px; margin: 15px 0; color: #f0f0f0; line-height: 1.4;"></div>
     <div class="row" style="margin-top: 15px; display: flex; gap: 10px;">
       <button id="customConfirmYesBtn" style="flex: 1; background: #4a7c59; border-color: #6abf7a;">Sí</button>
-      <button id="customConfirmNoBtn" style="flex: 1; background: #6a2a2a; border-color: #8a3a3a;">Cancelar</button>
+      <button id="customConfirmNoBtn" style="flex: 1; background: #6a2a2a; border-color: #8a3a3a;">No</button>
     </div>
   </div>
 </div>
 
 <script>
-// ==================== MODALES PERSONALIZADOS (REEMPLAZO DE ALERT/CONFIRM) ====================
+// ==================== MODALES PERSONALIZADOS ====================
 function showAppAlert(message, title = "Aviso") {
   return new Promise((resolve) => {
     document.getElementById('customAlertTitle').textContent = title;
@@ -528,6 +524,14 @@ function getJobColor(index) {
   return DEFAULT_JOB_COLORS[index % DEFAULT_JOB_COLORS.length];
 }
 
+function getJobColorByName(jobName) {
+  if (state.patterns) {
+    const found = state.patterns.find(p => p.name === jobName);
+    if (found && found.color) return found.color;
+  }
+  return '#e65c5c';
+}
+
 function getSubjectColor(subName) {
   if (state.subjects) {
     const found = state.subjects.find(s => s.name === subName);
@@ -561,11 +565,24 @@ function defaultBlocks() {
   return arr;
 }
 
-// ==================== PERSISTENCIA ====================
+// ==================== PERSISTENCIA Y MIGRACIÓN DE MÚLTIPLES TRABAJOS ====================
 function save() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
   catch(e) { console.warn('No se pudo guardar', e); }
 }
+
+function normalizeDayWorkData(dayObj) {
+  if (!dayObj.trabajo) dayObj.trabajo = {};
+  for (const h in dayObj.trabajo) {
+    const val = dayObj.trabajo[h];
+    if (typeof val === 'string') {
+      dayObj.trabajo[h] = val.trim() ? [val.trim()] : [];
+    } else if (!Array.isArray(val)) {
+      dayObj.trabajo[h] = [];
+    }
+  }
+}
+
 function load() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -598,6 +615,11 @@ function load() {
     if (!state.jobHourTemplates) state.jobHourTemplates = {};
     if (!state.manualDays) state.manualDays = {};
     if (!state.blocks || state.blocks.length === 0) state.blocks = defaultBlocks();
+
+    // Migrar todos los días existentes a arreglo de trabajos por bloque
+    for (const iso in state.days) {
+      normalizeDayWorkData(state.days[iso]);
+    }
   } catch(e) {
     state.blocks = defaultBlocks();
     state.patterns = [];
@@ -623,15 +645,13 @@ async function triggerSecretReset() {
   }
 }
 
-// ==================== GESTIÓN INTELIGENTE DEL BOTÓN ATRÁS (HISTORIAL) ====================
-// Creamos una entrada fantasma al inicio para asegurar que siempre haya historial que retener
+// ==================== GESTIÓN INTELIGENTE DEL BOTÓN ATRÁS ====================
 if (!window.history.state || window.history.state.init !== true) {
   window.history.replaceState({ view: 'calendar', init: true }, '', '');
   window.history.pushState({ view: 'calendar', init: true }, '', '');
 }
 
 window.addEventListener('popstate', async (e) => {
-  // 1. Si hay algún modal abierto, lo cerramos primero con "Atrás"
   const openModals = document.querySelectorAll('.modal.open');
   if (openModals.length > 0) {
     openModals.forEach(m => m.classList.remove('open'));
@@ -642,20 +662,14 @@ window.addEventListener('popstate', async (e) => {
   const currentView = getCurrentActiveViewName();
 
   if (currentView === 'calendar') {
-    // Si estamos en Calendario, mostramos la alerta de salida
-    const salir = await showAppConfirm("¿Deseas salir de la aplicación?");
+    const salir = await showAppConfirm("Si realmente desea salir repita la acción (o toque Sí). De lo contrario marque 'no', que es la opción que sí funciona.");
     if (salir) {
-      // Forzar cierre real de la app o retroceso definitivo en contenedores PWA
-      try {
-        window.close();
-      } catch(err) {}
+      try { window.close(); } catch(err) {}
       window.history.go(-1);
     } else {
-      // Si cancela, volvemos a empujar el estado para mantener la app abierta
       window.history.pushState({ view: 'calendar', init: true }, '', '');
     }
   } else {
-    // Si estamos en Semana o Día, regresamos a Calendario limpiamente
     switchToCalendarView(false);
   }
 });
@@ -726,6 +740,7 @@ function formatDate(iso) {
 }
 function getDay(iso) {
   if (!state.days[iso]) state.days[iso] = { trabajo: {}, estudio: {}, priority: '', evaluations: [], notes: [] };
+  normalizeDayWorkData(state.days[iso]);
   if (!state.days[iso].evaluations) state.days[iso].evaluations = [];
   if (state.days[iso].notes === undefined) {
     if (state.days[iso].note && typeof state.days[iso].note === 'string' && state.days[iso].note.trim()) {
@@ -777,11 +792,7 @@ function getActiveWorkLabelsWithColors(iso) {
 
   if (state.manualDays && state.manualDays[iso]) {
     state.manualDays[iso].forEach(jobName => {
-      let matchedColor = '#e65c5c';
-      if (state.patterns) {
-        const found = state.patterns.find(p => p.name === jobName);
-        if (found) matchedColor = found.color;
-      }
+      let matchedColor = getJobColorByName(jobName);
       if (!result.some(r => r.name === jobName)) {
         result.push({ name: jobName, color: matchedColor });
       }
@@ -789,10 +800,6 @@ function getActiveWorkLabelsWithColors(iso) {
   }
 
   return result;
-}
-
-function isWorkDay(iso) {
-  return getActiveWorkLabelsWithColors(iso).length > 0;
 }
 
 function effectivePriority(iso) {
@@ -839,13 +846,8 @@ function exportToImage(elementId, filename) {
 document.getElementById('exportCalImg').onclick = () => exportToImage('calendarView', 'calendario_horario');
 document.getElementById('exportWeekImg').onclick = () => exportToImage('weekView', 'semana_horario');
 
-// ==================== CALENDARIO ====================
-function populateCalFilterSelect() {
-  const select = document.getElementById('calFilterWork');
-  if (!select) return;
-  const currentVal = select.value;
-  select.innerHTML = '<option value="">Mostrar: Todos</option>';
-  
+// ==================== SINCRONIZACIÓN DE FILTROS DE TRABAJO ====================
+function populateAllWorkFilterSelects() {
   const jobNamesSet = new Set();
   if (state.patterns) {
     state.patterns.forEach(p => { if (p.name) jobNamesSet.add(p.name); });
@@ -856,24 +858,39 @@ function populateCalFilterSelect() {
     }
   }
 
-  jobNamesSet.forEach(name => {
-    const opt = document.createElement('option');
-    opt.value = name;
-    opt.textContent = name;
-    select.appendChild(opt);
+  document.querySelectorAll('.globalWorkFilter').forEach(select => {
+    const currentVal = select.value;
+    select.innerHTML = '<option value="">Mostrar: Todos</option>';
+    jobNamesSet.forEach(name => {
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      select.appendChild(opt);
+    });
+    select.value = currentVal;
   });
-
-  select.value = currentVal;
-  currentWorkFilter = select.value;
 }
 
-document.getElementById('calFilterWork').onchange = (e) => {
-  currentWorkFilter = e.target.value;
-  renderCalendar();
-};
+document.querySelectorAll('.globalWorkFilter').forEach(select => {
+  select.onchange = (e) => {
+    currentWorkFilter = e.target.value;
+    document.querySelectorAll('.globalWorkFilter').forEach(s => s.value = currentWorkFilter);
+    
+    // Si seleccionamos un trabajo en el filtro en vista Día, también sincronizamos el pincel automáticamente
+    if (currentWorkFilter) {
+      const brushSelect = document.getElementById('dayWorkSelect');
+      if (brushSelect) brushSelect.value = currentWorkFilter;
+    }
 
+    renderCalendar();
+    renderWeek();
+    renderDay();
+  };
+});
+
+// ==================== CALENDARIO ====================
 function renderCalendar() {
-  populateCalFilterSelect();
+  populateAllWorkFilterSelects();
   const grid = document.getElementById('calGrid');
   grid.innerHTML = '';
   const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -910,15 +927,13 @@ function makeCalDay(y, m, d, otherMonth) {
   
   const day = state.days[iso];
   if (day && day.trabajo) {
-    Object.values(day.trabajo).forEach(wName => {
-      if (wName && !activeWorks.some(aw => aw.name === wName)) {
-        let matchedColor = '#e65c5c';
-        if (state.patterns) {
-          const found = state.patterns.find(p => p.name === wName);
-          if (found) matchedColor = found.color;
+    normalizeDayWorkData(day);
+    Object.values(day.trabajo).forEach(jobsArr => {
+      jobsArr.forEach(wName => {
+        if (wName && !activeWorks.some(aw => aw.name === wName)) {
+          activeWorks.push({ name: wName, color: getJobColorByName(wName) });
         }
-        activeWorks.push({ name: wName, color: matchedColor });
-      }
+      });
     });
   }
 
@@ -947,7 +962,6 @@ function makeCalDay(y, m, d, otherMonth) {
     const s = document.createElement('div');
     s.className = 'mini';
     s.style.backgroundColor = w.color;
-    s.style.color = '#fff';
     s.textContent = 'T: ' + w.name;
     el.appendChild(s);
   });
@@ -1024,7 +1038,9 @@ function populateDaySelects() {
       opt.textContent = n;
       workSelect.appendChild(opt);
     });
-    if (currentVal && names.includes(currentVal)) {
+    if (currentWorkFilter && names.includes(currentWorkFilter)) {
+      workSelect.value = currentWorkFilter;
+    } else if (currentVal && names.includes(currentVal)) {
       workSelect.value = currentVal;
     } else {
       const activeToday = getActiveWorkLabelsWithColors(currentDate);
@@ -1055,7 +1071,13 @@ function populateDaySelects() {
   }
 }
 
+// Obtiene el trabajo activo para el pincel/edición en Vista Día
+function getTargetBrushJob() {
+  return currentWorkFilter || document.getElementById('dayWorkSelect').value || 'Trabajo';
+}
+
 function renderDay() {
+  populateAllWorkFilterSelects();
   document.getElementById('dayTitle').textContent = formatDate(currentDate);
   const day = getDay(currentDate);
   document.getElementById('dayPriority').value = day.priority || state.globalPriority;
@@ -1064,7 +1086,11 @@ function renderDay() {
   cols.innerHTML = '';
 
   cols.appendChild(document.createElement('div'));
-  const hT = document.createElement('div'); hT.className = 'colHead trabajo'; hT.textContent = 'TRABAJO'; cols.appendChild(hT);
+  const hT = document.createElement('div');
+  hT.className = 'colHead trabajo';
+  hT.textContent = currentWorkFilter ? `TRABAJO (${currentWorkFilter})` : 'TRABAJO (TODOS)';
+  cols.appendChild(hT);
+
   const hE = document.createElement('div'); hE.className = 'colHead estudio'; hE.textContent = 'ESTUDIO'; cols.appendChild(hE);
   const hR = document.createElement('div'); hR.className = 'colHead resultado'; hR.textContent = 'RESULTADO'; cols.appendChild(hR);
 
@@ -1077,42 +1103,71 @@ function renderDay() {
     hl.textContent = `${formatHour12(blk.ini)} a ${formatHour12(blk.fin)}`;
     cols.appendChild(hl);
 
+    // Todos los trabajos asignados en este bloque
+    const allJobsInBlock = day.trabajo[idx] || [];
+    
+    // Filtrar según lo que el usuario tenga seleccionado en el filtro
+    let visibleJobs = currentWorkFilter 
+      ? allJobsInBlock.filter(j => j === currentWorkFilter)
+      : allJobsInBlock;
+
     const ct = document.createElement('div');
     ct.className = 'cell'; ct.dataset.col = 'trabajo'; ct.dataset.h = idx;
-    if (day.trabajo[idx]) { 
+    if (visibleJobs.length > 0) { 
       ct.classList.add('trabajo'); 
-      ct.textContent = day.trabajo[idx]; 
+      if (visibleJobs.length === 1) {
+        ct.style.backgroundColor = getJobColorByName(visibleJobs[0]);
+        ct.textContent = visibleJobs[0];
+      } else {
+        // Si hay más de 1 trabajo simultáneo en la misma hora
+        ct.style.background = `linear-gradient(90deg, ${getJobColorByName(visibleJobs[0])} 50%, ${getJobColorByName(visibleJobs[1])} 50%)`;
+        ct.textContent = visibleJobs.join(' / ');
+        ct.title = 'Trabajos simultáneos: ' + visibleJobs.join(', ');
+      }
     }
     cols.appendChild(ct);
 
+    const e = day.estudio[idx] || null;
     const ce = document.createElement('div');
     ce.className = 'cell'; ce.dataset.col = 'estudio'; ce.dataset.h = idx;
-    if (day.estudio[idx]) { 
+    if (e) { 
       ce.className = 'cell estudio';
-      ce.style.backgroundColor = getSubjectColor(day.estudio[idx]);
-      ce.textContent = day.estudio[idx]; 
+      ce.style.backgroundColor = getSubjectColor(e);
+      ce.textContent = e; 
     } else {
       ce.className = 'cell';
       ce.style.backgroundColor = '';
     }
     cols.appendChild(ce);
 
+    // Columna RESULTADO
     const cr = document.createElement('div');
     cr.className = 'cell resultado';
-    const t = day.trabajo[idx], e = day.estudio[idx];
-    if (t && e) {
+    const hasWork = visibleJobs.length > 0;
+    const workLabel = visibleJobs.join(' / ');
+
+    if (hasWork && e) {
       cr.classList.add('conflict');
       if (prio === 'trabajo') {
         cr.classList.add('conflict-t');
-        cr.textContent = t;
-        cr.title = 'Conflicto (Gana Trabajo): ' + t + ' | Desplazado: ' + e;
+        cr.style.backgroundColor = getJobColorByName(visibleJobs[0]);
+        cr.textContent = workLabel;
+        cr.title = 'Conflicto (Gana Trabajo): ' + workLabel + ' | Desplazado: ' + e;
       } else {
         cr.classList.add('conflict-e');
         cr.style.backgroundColor = getSubjectColor(e);
         cr.textContent = e;
-        cr.title = 'Conflicto (Gana Estudio): ' + e + ' | Desplazado: ' + t;
+        cr.title = 'Conflicto (Gana Estudio): ' + e + ' | Desplazado: ' + workLabel;
       }
-    } else if (t) { cr.classList.add('win-t'); cr.textContent = t; }
+    } else if (hasWork) { 
+      cr.classList.add('win-t'); 
+      if (visibleJobs.length === 1) {
+        cr.style.backgroundColor = getJobColorByName(visibleJobs[0]);
+      } else {
+        cr.style.background = `linear-gradient(90deg, ${getJobColorByName(visibleJobs[0])} 50%, ${getJobColorByName(visibleJobs[1])} 50%)`;
+      }
+      cr.textContent = workLabel; 
+    }
     else if (e) { 
       cr.classList.add('win-e'); 
       cr.style.backgroundColor = getSubjectColor(e);
@@ -1218,13 +1273,14 @@ document.getElementById('subSave').onclick = async () => {
   populateDaySelects();
   renderDay();
   renderCalendar();
+  renderWeek();
   await showAppAlert('Materias guardadas y actualizadas con éxito.');
 };
 
 // ==================== APLICAR HORAS DE TRABAJO A SUS DÍAS ====================
 document.getElementById('applyWorkHoursToPatternDays').onclick = async () => {
   if (isLocked) return;
-  const selectedJob = document.getElementById('dayWorkSelect').value;
+  const selectedJob = getTargetBrushJob();
   if (!selectedJob) {
     await showAppAlert('Selecciona un trabajo en el menú desplegable.');
     return;
@@ -1233,7 +1289,7 @@ document.getElementById('applyWorkHoursToPatternDays').onclick = async () => {
   const day = getDay(currentDate);
   const hoursTemplate = {};
   for (const h in day.trabajo) {
-    if (day.trabajo[h] === selectedJob) {
+    if (day.trabajo[h] && day.trabajo[h].includes(selectedJob)) {
       hoursTemplate[h] = selectedJob;
     }
   }
@@ -1254,14 +1310,18 @@ document.getElementById('applyWorkHoursToPatternDays').onclick = async () => {
 
     if (hasThisJobToday) {
       const targetDay = getDay(iso);
+      // Limpiar solo las ocurrencias previas de este trabajo específico sin tocar los demás
       for (const h in targetDay.trabajo) {
-        if (targetDay.trabajo[h] === selectedJob) {
-          delete targetDay.trabajo[h];
-        }
+        targetDay.trabajo[h] = targetDay.trabajo[h].filter(j => j !== selectedJob);
+        if (targetDay.trabajo[h].length === 0) delete targetDay.trabajo[h];
       }
+      // Añadir el horario de este trabajo específico
       if (Object.keys(hoursTemplate).length > 0) {
         for (const h in hoursTemplate) {
-          targetDay.trabajo[h] = selectedJob;
+          if (!targetDay.trabajo[h]) targetDay.trabajo[h] = [];
+          if (!targetDay.trabajo[h].includes(selectedJob)) {
+            targetDay.trabajo[h].push(selectedJob);
+          }
         }
       }
       updatedCount++;
@@ -1272,10 +1332,11 @@ document.getElementById('applyWorkHoursToPatternDays').onclick = async () => {
   save();
   renderDay();
   renderCalendar();
+  renderWeek();
   if (Object.keys(hoursTemplate).length === 0) {
     await showAppAlert(`Se limpiaron las horas de "${selectedJob}" en todos sus ${updatedCount} días asignados del año.`);
   } else {
-    await showAppAlert(`Horario de "${selectedJob}" aplicado a todos sus ${updatedCount} días laborables.`);
+    await showAppAlert(`Horario de "${selectedJob}" aplicado a todos sus ${updatedCount} días laborables (respetando los demás trabajos).`);
   }
 };
 
@@ -1409,6 +1470,7 @@ document.getElementById('evalSaveBtn').onclick = async () => {
 
 // ==================== VISTA SEMANAL ====================
 function renderWeek() {
+  populateAllWorkFilterSelects();
   if (!weekStartDate) weekStartDate = getMondayOf(new Date());
   const grid = document.getElementById('weekGrid');
   grid.innerHTML = '';
@@ -1459,35 +1521,46 @@ function renderWeek() {
       d.setDate(d.getDate() + i);
       const iso = toISO(d);
       const day = state.days[iso];
-      const prio = (day && day.priority) ? day.priority : prioGlobal;
+      if (day) normalizeDayWorkData(day);
 
-      const t = (day && day.trabajo) ? day.trabajo[idx] : null;
+      const prio = (day && day.priority) ? day.priority : prioGlobal;
+      const allJobs = (day && day.trabajo && day.trabajo[idx]) ? day.trabajo[idx] : [];
+      const visibleJobs = currentWorkFilter ? allJobs.filter(j => j === currentWorkFilter) : allJobs;
       const e = (day && day.estudio) ? day.estudio[idx] : null;
 
       const cell = document.createElement('div');
       cell.className = 'weekCell';
+      const hasWork = visibleJobs.length > 0;
+      const workLabel = visibleJobs.join(' / ');
 
-      let texto = '';
-      if (t && e) {
+      if (hasWork && e) {
         cell.classList.add('mixed');
-        texto = (prio === 'trabajo') ? t : e;
-        cell.title = 'Trabajo: ' + t + '\nEstudio: ' + e;
-      } else if (t) {
-        cell.classList.add('trabajo');
-        texto = t;
+        if (prio === 'trabajo') {
+          cell.style.backgroundColor = getJobColorByName(visibleJobs[0]);
+          cell.textContent = workLabel;
+        } else {
+          cell.style.backgroundColor = getSubjectColor(e);
+          cell.textContent = e;
+        }
+        cell.title = 'Trabajo: ' + workLabel + '\nEstudio: ' + e;
+      } else if (hasWork) {
+        if (visibleJobs.length === 1) {
+          cell.style.backgroundColor = getJobColorByName(visibleJobs[0]);
+        } else {
+          cell.style.background = `linear-gradient(90deg, ${getJobColorByName(visibleJobs[0])} 50%, ${getJobColorByName(visibleJobs[1])} 50%)`;
+        }
+        cell.textContent = workLabel;
       } else if (e) {
-        cell.className = 'weekCell estudio';
         cell.style.backgroundColor = getSubjectColor(e);
-        texto = e;
+        cell.textContent = e;
       }
-      cell.textContent = texto;
       cell.onclick = () => switchToDayView(iso);
       grid.appendChild(cell);
     }
   });
 }
 
-// ==================== PINTAR ARRASTRANDO (TRABAJO Y ESTUDIO) ====================
+// ==================== PINTAR ARRASTRANDO (INDEPENDIENTE POR TRABAJO) ====================
 let painting = false, paintMode = null, paintCol = null;
 
 document.addEventListener('mousedown', e => {
@@ -1500,7 +1573,15 @@ document.addEventListener('mousedown', e => {
   paintCol = cell.dataset.col;
   const h = +cell.dataset.h;
   const day = getDay(currentDate);
-  paintMode = day[paintCol][h] ? 'remove' : 'add';
+
+  if (paintCol === 'trabajo') {
+    const targetJob = getTargetBrushJob();
+    const list = day.trabajo[h] || [];
+    paintMode = list.includes(targetJob) ? 'remove' : 'add';
+  } else {
+    paintMode = day.estudio[h] ? 'remove' : 'add';
+  }
+
   applyPaint(h);
   e.preventDefault();
 });
@@ -1513,18 +1594,29 @@ document.addEventListener('mouseover', e => {
 });
 
 document.addEventListener('mouseup', () => {
-  if (painting) { painting = false; save(); renderDay(); }
+  if (painting) { painting = false; save(); renderDay(); renderWeek(); renderCalendar(); }
 });
 
 function applyPaint(idx) {
   const day = getDay(currentDate);
-  if (paintMode === 'add') {
-    const brush = paintCol === 'trabajo'
-      ? (document.getElementById('dayWorkSelect').value || 'Trabajo')
-      : (document.getElementById('daySubjectSelect').value || 'Estudio');
-    day[paintCol][idx] = brush;
+  if (paintCol === 'trabajo') {
+    const targetJob = getTargetBrushJob();
+    if (!day.trabajo[idx]) day.trabajo[idx] = [];
+    if (paintMode === 'add') {
+      if (!day.trabajo[idx].includes(targetJob)) {
+        day.trabajo[idx].push(targetJob);
+      }
+    } else {
+      day.trabajo[idx] = day.trabajo[idx].filter(j => j !== targetJob);
+      if (day.trabajo[idx].length === 0) delete day.trabajo[idx];
+    }
   } else {
-    delete day[paintCol][idx];
+    if (paintMode === 'add') {
+      const brush = document.getElementById('daySubjectSelect').value || 'Estudio';
+      day.estudio[idx] = brush;
+    } else {
+      delete day.estudio[idx];
+    }
   }
   renderDay();
 }
@@ -1537,22 +1629,26 @@ document.addEventListener('dblclick', async e => {
   const col = cell.dataset.col;
   const h = +cell.dataset.h;
   const day = getDay(currentDate);
-  if (!day[col][h]) return;
   
   if (col === 'estudio') {
+    if (!day.estudio[h]) return;
     const subs = getAvailableSubjects();
     let msg = 'Selecciona la nueva materia (o déjalo vacío para borrar):\n' + subs.join(', ');
-    const nuevo = prompt(msg, day[col][h]);
+    const nuevo = prompt(msg, day.estudio[h]);
     if (nuevo === null) return;
-    if (nuevo.trim() === '') delete day[col][h];
-    else day[col][h] = nuevo.trim();
+    if (nuevo.trim() === '') delete day.estudio[h];
+    else day.estudio[h] = nuevo.trim();
   } else {
-    const nuevo = prompt('Editar etiqueta (vac\u00edo para borrar):', day[col][h]);
-    if (nuevo === null) return;
-    if (nuevo.trim() === '') delete day[col][h];
-    else day[col][h] = nuevo.trim();
+    const targetJob = getTargetBrushJob();
+    const list = day.trabajo[h] || [];
+    if (!list.includes(targetJob)) return;
+    const confirmar = await showAppConfirm(`¿Quitar "${targetJob}" de este bloque horario?`);
+    if (confirmar) {
+      day.trabajo[h] = list.filter(j => j !== targetJob);
+      if (day.trabajo[h].length === 0) delete day.trabajo[h];
+    }
   }
-  save(); renderDay();
+  save(); renderDay(); renderWeek(); renderCalendar();
 });
 
 // ==================== NAVEGACIÓN Y BOTONES ====================
@@ -1601,28 +1697,51 @@ document.getElementById('dayPriority').onchange = e => {
   if (isLocked) return;
   getDay(currentDate).priority = e.target.value; save(); renderDay();
 };
+
 document.getElementById('fillTrabajoDay').onclick = () => {
   if (isLocked) return;
   const day = getDay(currentDate);
-  const lbl = document.getElementById('dayWorkSelect').value || 'Trabajo';
+  const lbl = getTargetBrushJob();
   const total = (state.blocks || defaultBlocks()).length;
-  for (let h = 0; h < total; h++) day.trabajo[h] = lbl;
-  save(); renderDay();
+  for (let h = 0; h < total; h++) {
+    if (!day.trabajo[h]) day.trabajo[h] = [];
+    if (!day.trabajo[h].includes(lbl)) day.trabajo[h].push(lbl);
+  }
+  save(); renderDay(); renderWeek(); renderCalendar();
 };
-document.getElementById('clearTrabajo').onclick = () => { if(!isLocked){ getDay(currentDate).trabajo = {}; save(); renderDay(); } };
+
+document.getElementById('clearTrabajo').onclick = () => {
+  if (isLocked) return;
+  const day = getDay(currentDate);
+  if (currentWorkFilter) {
+    // Limpiar solo el trabajo filtrado
+    for (const h in day.trabajo) {
+      day.trabajo[h] = day.trabajo[h].filter(j => j !== currentWorkFilter);
+      if (day.trabajo[h].length === 0) delete day.trabajo[h];
+    }
+  } else {
+    day.trabajo = {};
+  }
+  save(); renderDay(); renderWeek(); renderCalendar();
+};
+
 document.getElementById('fillEstudioDay').onclick = () => {
   if (isLocked) return;
   const day = getDay(currentDate);
   const lbl = document.getElementById('daySubjectSelect').value || 'Estudio';
   const total = (state.blocks || defaultBlocks()).length;
   for (let h = 0; h < total; h++) day.estudio[h] = lbl;
-  save(); renderDay();
+  save(); renderDay(); renderWeek(); renderCalendar();
 };
-document.getElementById('clearEstudio').onclick = () => { if(!isLocked){ getDay(currentDate).estudio = {}; save(); renderDay(); } };
+
+document.getElementById('clearEstudio').onclick = () => {
+  if (!isLocked) { getDay(currentDate).estudio = {}; save(); renderDay(); renderWeek(); renderCalendar(); }
+};
+
 document.getElementById('clearDay').onclick = () => {
   if (isLocked) return;
   state.days[currentDate] = { trabajo: {}, estudio: {}, priority: '', evaluations: [], notes: [] };
-  save(); renderDay();
+  save(); renderDay(); renderWeek(); renderCalendar();
 };
 
 // ==================== PATRONES ====================
@@ -1668,10 +1787,10 @@ window.removeDraftPattern = async function(index) {
     for (const iso in state.days) {
       const day = state.days[iso];
       if (day && day.trabajo) {
+        normalizeDayWorkData(day);
         for (const hourIdx in day.trabajo) {
-          if (day.trabajo[hourIdx] === jobName || day.trabajo[hourIdx].includes(jobName)) {
-            delete day.trabajo[hourIdx];
-          }
+          day.trabajo[hourIdx] = day.trabajo[hourIdx].filter(j => j !== jobName);
+          if (day.trabajo[hourIdx].length === 0) delete day.trabajo[hourIdx];
         }
       }
     }
@@ -1746,25 +1865,16 @@ document.getElementById('patSave').onclick = async () => {
     for (const iso in state.days) {
       const day = state.days[iso];
       if (day && day.trabajo) {
+        normalizeDayWorkData(day);
         for (const h in day.trabajo) {
-          const currentVal = day.trabajo[h];
-          for (const oldName in nameChanges) {
-            if (currentVal === oldName) {
-              day.trabajo[h] = nameChanges[oldName];
-            }
-          }
+          day.trabajo[h] = day.trabajo[h].map(jobName => nameChanges[jobName] || jobName);
         }
       }
     }
 
     if (state.manualDays) {
       for (const iso in state.manualDays) {
-        state.manualDays[iso] = state.manualDays[iso].map(jobName => {
-          for (const oldName in nameChanges) {
-            if (jobName === oldName) return nameChanges[oldName];
-          }
-          return jobName;
-        });
+        state.manualDays[iso] = state.manualDays[iso].map(jobName => nameChanges[jobName] || jobName);
       }
     }
   }
@@ -1773,6 +1883,7 @@ document.getElementById('patSave').onclick = async () => {
   save();
   patternModal.classList.remove('open');
   renderCalendar();
+  renderWeek();
   await showAppAlert('Patrones guardados y actualizados correctamente.');
 };
 
@@ -1867,11 +1978,7 @@ function makeManualDayCell(y, m, d, otherMonth) {
 
   if (state.manualDays && state.manualDays[iso]) {
     state.manualDays[iso].forEach(jobName => {
-      let dotColor = '#e65c5c';
-      if (state.patterns) {
-        const found = state.patterns.find(p => p.name === jobName);
-        if (found) dotColor = found.color;
-      }
+      let dotColor = getJobColorByName(jobName);
       const dot = document.createElement('span');
       dot.className = 'manualMarkDot';
       dot.style.backgroundColor = dotColor;
@@ -1901,40 +2008,6 @@ function makeManualDayCell(y, m, d, otherMonth) {
 
   return el;
 }
-
-async function applyPatternsToRange(startD, endD) {
-  const hasActive = state.patterns.some(p => p.enabled);
-  if (!hasActive) { await showAppAlert('Primero activa al menos un patrón.'); return; }
-  let curr = new Date(startD);
-  while (curr <= endD) {
-    const iso = toISO(curr);
-    const day = getDay(iso);
-    const workLabels = getActiveWorkLabelsWithColors(iso);
-    
-    day.trabajo = {};
-    if (workLabels.length > 0) {
-      workLabels.forEach(w => {
-        const tpl = state.jobHourTemplates ? state.jobHourTemplates[w.name] : null;
-        if (tpl && Object.keys(tpl).length > 0) {
-          for (const h in tpl) {
-            day.trabajo[h] = w.name;
-          }
-        }
-      });
-    }
-    curr.setDate(curr.getDate() + 1);
-  }
-  save();
-  renderCalendar();
-}
-document.getElementById('applyPattern').onclick = async () => {
-  await applyPatternsToRange(new Date(calYear, calMonth, 1), new Date(calYear, calMonth + 1, 0));
-  await showAppAlert('Patrones aplicados al mes visible.');
-};
-document.getElementById('applyPatternYear').onclick = async () => {
-  await applyPatternsToRange(new Date(calYear, 0, 1), new Date(calYear, 11, 31));
-  await showAppAlert('Patrones aplicados a todo el año ' + calYear + '.');
-};
 
 // ==================== REPETIR ESTUDIO ====================
 const repeatModal = document.getElementById('repeatModal');
@@ -1983,6 +2056,7 @@ document.getElementById('repSave').onclick = async () => {
   save(); repeatModal.classList.remove('open');
   await showAppAlert('Estudio copiado a ' + count + ' días.');
   renderCalendar();
+  renderWeek();
 };
 
 // ==================== BLOQUES HORARIOS ====================
@@ -2042,7 +2116,8 @@ document.getElementById('importFile').onchange = e => {
     try {
         state = Object.assign(state, JSON.parse(ev.target.result));
         if (!state.blocks || state.blocks.length === 0) state.blocks = defaultBlocks();
-        save(); renderCalendar();
+        for (const iso in state.days) normalizeDayWorkData(state.days[iso]);
+        save(); renderCalendar(); renderWeek();
         await showAppAlert('Datos importados.');
     } catch(err) { await showAppAlert('Archivo inválido.'); }
   };
