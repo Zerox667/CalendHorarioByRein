@@ -284,7 +284,7 @@
     <button id="applyWorkHoursToPatternDays" style="background:#4a5c7c; border-color:#6a8abf;">Aplicar horas de este trabajo a sus días</button>
     <button id="fillEstudioDay">Rellenar Estudio (todo)</button>
     <button id="clearEstudio">Limpiar Estudio</button>
-    <button id="repeatStudy">Repetir estudio semanal</button>
+    <button id="repeatStudy" style="background:#5c4a7c; border-color:#7a6abf;">Repetir estudio semanal</button>
     <button id="clearDay">Limpiar d&iacute;a completo</button>
   </div>
 </div>
@@ -623,16 +623,92 @@ async function triggerSecretReset() {
   }
 }
 
-// ==================== GESTIÓN DE SALIDA SEGURA (BOTÓN ATRÁS PWA) ====================
-window.history.pushState({ page: 'home' }, '', '');
+// ==================== GESTIÓN INTELIGENTE DEL BOTÓN ATRÁS (HISTORIAL) ====================
+// Creamos una entrada fantasma al inicio para asegurar que siempre haya historial que retener
+if (!window.history.state || window.history.state.init !== true) {
+  window.history.replaceState({ view: 'calendar', init: true }, '', '');
+  window.history.pushState({ view: 'calendar', init: true }, '', '');
+}
+
 window.addEventListener('popstate', async (e) => {
-  const salir = await showAppConfirm("¿Deseas salir de la aplicación?");
-  if (salir) {
-    window.history.back();
+  // 1. Si hay algún modal abierto, lo cerramos primero con "Atrás"
+  const openModals = document.querySelectorAll('.modal.open');
+  if (openModals.length > 0) {
+    openModals.forEach(m => m.classList.remove('open'));
+    window.history.pushState({ view: getCurrentActiveViewName(), init: true }, '', '');
+    return;
+  }
+
+  const currentView = getCurrentActiveViewName();
+
+  if (currentView === 'calendar') {
+    // Si estamos en Calendario, mostramos la alerta de salida
+    const salir = await showAppConfirm("¿Deseas salir de la aplicación?");
+    if (salir) {
+      // Forzar cierre real de la app o retroceso definitivo en contenedores PWA
+      try {
+        window.close();
+      } catch(err) {}
+      window.history.go(-1);
+    } else {
+      // Si cancela, volvemos a empujar el estado para mantener la app abierta
+      window.history.pushState({ view: 'calendar', init: true }, '', '');
+    }
   } else {
-    window.history.pushState({ page: 'home' }, '', '');
+    // Si estamos en Semana o Día, regresamos a Calendario limpiamente
+    switchToCalendarView(false);
   }
 });
+
+function getCurrentActiveViewName() {
+  if (document.getElementById('dayView').classList.contains('active-view')) return 'day';
+  if (document.getElementById('weekView').classList.contains('active-view')) return 'week';
+  return 'calendar';
+}
+
+function switchToCalendarView(pushHistory = true) {
+  document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active-view'));
+  document.getElementById('calendarView').classList.add('active-view');
+  document.getElementById('tabCalendar').classList.add('active');
+  document.getElementById('tabWeek').classList.remove('active');
+  document.getElementById('tabDay').classList.remove('active');
+  document.getElementById('openBlocks').style.display = 'none';
+  renderCalendar();
+
+  if (pushHistory) {
+    window.history.pushState({ view: 'calendar', init: true }, '', '');
+  }
+}
+
+function switchToWeekView(pushHistory = true) {
+  document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active-view'));
+  document.getElementById('weekView').classList.add('active-view');
+  document.getElementById('tabCalendar').classList.remove('active');
+  document.getElementById('tabDay').classList.remove('active');
+  document.getElementById('tabWeek').classList.add('active');
+  document.getElementById('openBlocks').style.display = 'inline-block';
+  renderWeek();
+
+  if (pushHistory) {
+    window.history.pushState({ view: 'week', init: true }, '', '');
+  }
+}
+
+function switchToDayView(iso, pushHistory = true) {
+  currentDate = iso;
+  document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active-view'));
+  document.getElementById('dayView').classList.add('active-view');
+  document.getElementById('tabCalendar').classList.remove('active');
+  document.getElementById('tabWeek').classList.remove('active');
+  document.getElementById('tabDay').classList.add('active');
+  document.getElementById('openBlocks').style.display = 'inline-block';
+  populateDaySelects();
+  renderDay();
+
+  if (pushHistory) {
+    window.history.pushState({ view: 'day', date: iso, init: true }, '', '');
+  }
+}
 
 // ==================== UTILIDADES ====================
 function toISO(d) {
@@ -903,7 +979,7 @@ function makeCalDay(y, m, d, otherMonth) {
     }
   }
 
-  el.addEventListener('click', () => openDay(iso));
+  el.addEventListener('click', () => switchToDayView(iso));
   return el;
 }
 
@@ -977,21 +1053,6 @@ function populateDaySelects() {
       subSelect.value = currentSub;
     }
   }
-}
-
-function openDay(iso) {
-  currentDate = iso;
-  document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active-view'));
-  document.getElementById('dayView').classList.add('active-view');
-  document.getElementById('tabCalendar').classList.remove('active');
-  document.getElementById('tabWeek').classList.remove('active');
-  document.getElementById('tabDay').classList.add('active');
-  
-  // Mostrar botón bloques horarios en vista Día
-  document.getElementById('openBlocks').style.display = 'inline-block';
-
-  populateDaySelects();
-  renderDay();
 }
 
 function renderDay() {
@@ -1420,7 +1481,7 @@ function renderWeek() {
         texto = e;
       }
       cell.textContent = texto;
-      cell.onclick = () => openDay(iso);
+      cell.onclick = () => switchToDayView(iso);
       grid.appendChild(cell);
     }
   });
@@ -1496,32 +1557,16 @@ document.addEventListener('dblclick', async e => {
 
 // ==================== NAVEGACIÓN Y BOTONES ====================
 document.getElementById('tabCalendar').onclick = () => {
-  document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active-view'));
-  document.getElementById('calendarView').classList.add('active-view');
-  document.getElementById('tabCalendar').classList.add('active');
-  document.getElementById('tabWeek').classList.remove('active');
-  document.getElementById('tabDay').classList.remove('active');
-  
-  // Ocultar botón bloques horarios en vista Calendario
-  document.getElementById('openBlocks').style.display = 'none';
-  renderCalendar();
+  switchToCalendarView(true);
 };
 
 document.getElementById('tabDay').onclick = () => {
   if (!currentDate) currentDate = toISO(new Date());
-  openDay(currentDate);
+  switchToDayView(currentDate, true);
 };
 
 document.getElementById('tabWeek').onclick = () => {
-  document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active-view'));
-  document.getElementById('weekView').classList.add('active-view');
-  document.getElementById('tabCalendar').classList.remove('active');
-  document.getElementById('tabDay').classList.remove('active');
-  document.getElementById('tabWeek').classList.add('active');
-  
-  // Mostrar botón bloques horarios en vista Semana
-  document.getElementById('openBlocks').style.display = 'inline-block';
-  renderWeek();
+  switchToWeekView(true);
 };
 
 document.getElementById('prevMonth').onclick = () => {
@@ -1548,7 +1593,9 @@ document.getElementById('weekToday').onclick = () => {
   weekStartDate = getMondayOf(new Date());
   renderWeek();
 };
-document.getElementById('backToCal').onclick = () => document.getElementById('tabCalendar').click();
+document.getElementById('backToCal').onclick = () => {
+  window.history.back();
+};
 
 document.getElementById('dayPriority').onchange = e => {
   if (isLocked) return;
