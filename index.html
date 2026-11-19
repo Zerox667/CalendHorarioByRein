@@ -440,7 +440,7 @@
   }
   .modalBox h3 { margin-top: 0; font-family: var(--font-display); }
   .modalBox label { display: block; margin: 8px 0 2px; font-size: 13px; }
-  .modalBox input[type=text], .modalBox select, .modalBox textarea {
+  .modalBox input[type=text], .modalBox input[type=date], .modalBox select, .modalBox textarea {
     width: 100%;
     padding: 6px;
     background: var(--bg-control);
@@ -451,6 +451,24 @@
   .modalBox textarea { resize: vertical; height: 70px; }
   .modalBox .row { display: flex; gap: 8px; margin-top: 15px; flex-wrap: wrap; }
   .hint { font-size: 12px; color: var(--text-muted); }
+
+  .applyScopeOption {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin-top: 8px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .applyScopeOption input[type=radio] {
+    width: auto;
+    margin: 0;
+    cursor: pointer;
+  }
 
   .inspectorSection {
     background: var(--bg-card);
@@ -695,6 +713,38 @@
   <button id="navWeek" class="nav-mode-btn">Semana</button>
   <button id="navDay" class="nav-mode-btn">D&iacute;a</button>
 </nav>
+
+<!-- Modal Aplicar Horas de Trabajo Hasta Fecha o Infinito -->
+<div id="applyWorkScopeModal" class="modal">
+  <div class="modalBox">
+    <h3>Aplicar horas de trabajo</h3>
+    <p class="hint" id="applyWorkSummaryText"></p>
+
+    <label>¿Desde qué fecha aplicar?</label>
+    <input type="date" id="applyWorkFromDate">
+
+    <label style="margin-top:10px;">¿Hasta cuándo aplicar?</label>
+    <label class="applyScopeOption">
+      <input type="radio" name="applyWorkEndMode" id="applyEndDateRadio" value="date" checked>
+      <span>Hasta una fecha específica</span>
+    </label>
+    <div id="applyEndDateBox" style="margin-top:6px;">
+      <input type="date" id="applyWorkUntilDate">
+    </div>
+
+    <label class="applyScopeOption">
+      <input type="radio" name="applyWorkEndMode" id="applyEndInfiniteRadio" value="infinite">
+      <span>Infinito (en todos los días futuros del trabajo)</span>
+    </label>
+
+    <p class="hint" style="margin-top:10px;">Sobrescribirá únicamente las horas anteriores de este trabajo en sus días asignados, conservando otros trabajos y materias.</p>
+
+    <div class="row" style="margin-top:16px;">
+      <button type="button" id="applyWorkConfirmBtn" style="flex:1; background:#4a7c59; border-color:#6abf7a; color:#fff;">Aplicar y sobrescribir</button>
+      <button type="button" id="applyWorkCancelBtn">Cancelar</button>
+    </div>
+  </div>
+</div>
 
 <!-- Modal Inspector por Pulsación Prolongada (Semana / Calendario) -->
 <div id="longPressInspectorModal" class="modal">
@@ -996,6 +1046,7 @@ let state = {
 let currentDate = '';
 let modalTargetISO = '';
 let inspectorTargetISO = '';
+let pendingApplyJob = '';
 let calYear, calMonth;
 let manYear, manMonth;
 let weekStartDate = null;
@@ -1446,7 +1497,6 @@ function getDominantMonthWeekInfo(mondayDate) {
   let startOffset = firstOfMonth.getDay();
   startOffset = (startOffset === 0) ? 6 : startOffset - 1;
 
-  // Si el mes dominante empieza en esta misma semana, tomamos el día 1; si ya venía de antes, tomamos el día de esa semana en ese mes
   let dayRef = dominant.sampleDay;
   for (let i = 0; i < 7; i++) {
     const d = new Date(mondayDate);
@@ -1873,7 +1923,6 @@ calViewElement.addEventListener('touchend', e => {
   }
 }, {passive: true});
 
-// Arrastre en la zona de semana (solo la cuadrícula, sin tocar el header)
 const weekSwipeZone = document.getElementById('weekSwipeZone');
 let weekSwipeStartX = 0;
 let weekSwipeStartY = 0;
@@ -1895,7 +1944,6 @@ weekSwipeZone.addEventListener('touchend', e => {
   }
 }, {passive: true});
 
-// Arrastre en la barra inferior para alternar entre Calendario, Semana y Día
 const VIEW_ORDER = ['calendar', 'week', 'day'];
 const bottomNavBar = document.getElementById('bottomNavBar');
 let navSwipeStartX = 0;
@@ -2177,7 +2225,30 @@ document.getElementById('subSave').onclick = async () => {
   await showAppAlert('Materias guardadas y actualizadas con éxito.');
 };
 
-// ==================== APLICAR HORAS DE TRABAJO A SUS DÍAS ====================
+// ==================== APLICAR HORAS DE TRABAJO HASTA FECHA O INFINITO ====================
+const applyWorkScopeModal = document.getElementById('applyWorkScopeModal');
+const applyEndDateRadio = document.getElementById('applyEndDateRadio');
+const applyEndInfiniteRadio = document.getElementById('applyEndInfiniteRadio');
+const applyEndDateBox = document.getElementById('applyEndDateBox');
+
+function syncApplyScopeEndUI() {
+  applyEndDateBox.style.display = applyEndDateRadio.checked ? 'block' : 'none';
+}
+applyEndDateRadio.onchange = syncApplyScopeEndUI;
+applyEndInfiniteRadio.onchange = syncApplyScopeEndUI;
+
+function computeHorizonEndDate(startISO, jobName) {
+  const baseDate = parseISO(startISO);
+  const horizon = new Date(baseDate.getFullYear() + 10, baseDate.getMonth(), baseDate.getDate());
+  let maxISO = toISO(horizon);
+
+  const pat = (state.patterns || []).find(p => p.name === jobName);
+  if (pat && pat.endDate && pat.endDate > maxISO) {
+    maxISO = pat.endDate;
+  }
+  return maxISO;
+}
+
 document.getElementById('applyWorkHoursToPatternDays').onclick = async () => {
   if (isLocked) return;
   const selectedJob = getTargetBrushJob();
@@ -2186,40 +2257,88 @@ document.getElementById('applyWorkHoursToPatternDays').onclick = async () => {
     return;
   }
 
-  const day = getDay(currentDate);
+  pendingApplyJob = selectedJob;
+  const baseISO = currentDate || toISO(new Date());
+  const baseD = parseISO(baseISO);
+  const defaultUntil = new Date(baseD.getFullYear(), 11, 31);
+  if (defaultUntil < baseD) {
+    defaultUntil.setFullYear(baseD.getFullYear() + 1);
+  }
+
+  document.getElementById('applyWorkSummaryText').textContent =
+    `Trabajo seleccionado: "${selectedJob}" (tomando como modelo las horas pintadas el ${formatDate(baseISO)}).`;
+  document.getElementById('applyWorkFromDate').value = baseISO;
+  document.getElementById('applyWorkUntilDate').value = toISO(defaultUntil);
+  applyEndDateRadio.checked = true;
+  applyEndInfiniteRadio.checked = false;
+  syncApplyScopeEndUI();
+
+  applyWorkScopeModal.classList.add('open');
+};
+
+document.getElementById('applyWorkCancelBtn').onclick = () => {
+  pendingApplyJob = '';
+  applyWorkScopeModal.classList.remove('open');
+};
+
+document.getElementById('applyWorkConfirmBtn').onclick = async () => {
+  const jobName = pendingApplyJob || getTargetBrushJob();
+  if (!jobName) return;
+
+  const fromISO = document.getElementById('applyWorkFromDate').value;
+  if (!fromISO) {
+    await showAppAlert('Indica la fecha desde la cual aplicar.');
+    return;
+  }
+
+  const isInfinite = applyEndInfiniteRadio.checked;
+  let untilISO = '';
+
+  if (isInfinite) {
+    untilISO = computeHorizonEndDate(fromISO, jobName);
+  } else {
+    untilISO = document.getElementById('applyWorkUntilDate').value;
+    if (!untilISO) {
+      await showAppAlert('Indica una fecha límite o selecciona "Infinito".');
+      return;
+    }
+    if (untilISO < fromISO) {
+      await showAppAlert('La fecha "Hasta" no puede ser anterior a la fecha "Desde".');
+      return;
+    }
+  }
+
+  const modelDay = getDay(currentDate || fromISO);
   const hoursTemplate = {};
-  for (const h in day.trabajo) {
-    if (day.trabajo[h] && day.trabajo[h].includes(selectedJob)) {
-      hoursTemplate[h] = selectedJob;
+  for (const h in modelDay.trabajo) {
+    if (modelDay.trabajo[h] && modelDay.trabajo[h].includes(jobName)) {
+      hoursTemplate[h] = jobName;
     }
   }
 
   if (!state.jobHourTemplates) state.jobHourTemplates = {};
-  state.jobHourTemplates[selectedJob] = hoursTemplate;
+  state.jobHourTemplates[jobName] = hoursTemplate;
 
-  const yearToUpdate = parseISO(currentDate).getFullYear();
-  const startD = new Date(yearToUpdate, 0, 1);
-  const endD = new Date(yearToUpdate, 11, 31);
-  let curr = new Date(startD);
+  const curr = parseISO(fromISO);
+  const endD = parseISO(untilISO);
   let updatedCount = 0;
 
   while (curr <= endD) {
     const iso = toISO(curr);
     const activeWorksToday = getActiveWorkLabelsWithColors(iso);
-    const hasThisJobToday = activeWorksToday.some(w => w.name === selectedJob);
+    const hasThisJobToday = activeWorksToday.some(w => w.name === jobName);
 
     if (hasThisJobToday) {
       const targetDay = getDay(iso);
+      // Sobrescribe únicamente las horas previas de este trabajo en el día
       for (const h in targetDay.trabajo) {
-        targetDay.trabajo[h] = targetDay.trabajo[h].filter(j => j !== selectedJob);
+        targetDay.trabajo[h] = targetDay.trabajo[h].filter(j => j !== jobName);
         if (targetDay.trabajo[h].length === 0) delete targetDay.trabajo[h];
       }
-      if (Object.keys(hoursTemplate).length > 0) {
-        for (const h in hoursTemplate) {
-          if (!targetDay.trabajo[h]) targetDay.trabajo[h] = [];
-          if (!targetDay.trabajo[h].includes(selectedJob)) {
-            targetDay.trabajo[h].push(selectedJob);
-          }
+      for (const h in hoursTemplate) {
+        if (!targetDay.trabajo[h]) targetDay.trabajo[h] = [];
+        if (!targetDay.trabajo[h].includes(jobName)) {
+          targetDay.trabajo[h].push(jobName);
         }
       }
       updatedCount++;
@@ -2228,13 +2347,20 @@ document.getElementById('applyWorkHoursToPatternDays').onclick = async () => {
   }
 
   save();
+  applyWorkScopeModal.classList.remove('open');
+  pendingApplyJob = '';
   renderDay();
   renderCalendar();
   renderWeek();
+
+  const rangeDesc = isInfinite
+    ? `desde ${fromISO} de forma infinita (hasta ${untilISO})`
+    : `desde ${fromISO} hasta ${untilISO}`;
+
   if (Object.keys(hoursTemplate).length === 0) {
-    await showAppAlert(`Se limpiaron las horas de "${selectedJob}" en todos sus ${updatedCount} días asignados del año.`);
+    await showAppAlert(`Se limpiaron las horas anteriores de "${jobName}" en ${updatedCount} días (${rangeDesc}).`);
   } else {
-    await showAppAlert(`Horario de "${selectedJob}" aplicado a todos sus ${updatedCount} días laborables (respetando los demás trabajos).`);
+    await showAppAlert(`Horas de "${jobName}" aplicadas y sobrescritas en ${updatedCount} días (${rangeDesc}).`);
   }
 };
 
