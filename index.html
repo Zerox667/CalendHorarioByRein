@@ -27,6 +27,7 @@
     --border-color: #444;
     --accent-color: #4a7c59;
     --accent-border: #6abf7a;
+    --week-num-color: #8ce09e;
     --font-display: 'Outfit', 'Segoe UI', system-ui, sans-serif;
     --font-body: 'Plus Jakarta Sans', 'Segoe UI', Arial, sans-serif;
   }
@@ -335,6 +336,44 @@
     width: 100%;
     max-width: 100%;
   }
+  .weekCornerBox {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 2px;
+    min-width: 0;
+    overflow: hidden;
+    text-align: center;
+  }
+  .weekCornerLabel {
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--text-muted);
+    line-height: 1.1;
+  }
+  .weekCornerNum {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--week-num-color);
+    line-height: 1.25;
+    margin-top: 1px;
+  }
+  .weekCornerMonth {
+    font-size: 8px;
+    font-weight: 600;
+    color: var(--text-muted);
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
   .weekColHead {
     text-align: center;
     font-weight: bold;
@@ -525,6 +564,7 @@
     .calDay .dayNum { font-size: 11px; }
     .cols { grid-template-columns: 62px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); gap: 2px; }
     .weekGrid { grid-template-columns: 52px repeat(7, minmax(0, 1fr)); gap: 2px; }
+    .weekCornerNum { font-size: 12px; }
     .themeSwatches { grid-template-columns: 1fr; }
   }
 
@@ -1024,6 +1064,7 @@ function applyAppearanceToDOM(cfg = getEffectiveAppearance()) {
   const mutedColor = isLight ? '#4f5b70' : '#aaa';
   const controlHover = isLight ? '#cbd5e6' : '#4a4a66';
   const borderColor = isLight ? '#b4c0d4' : '#444';
+  const weekNumColor = isLight ? '#1b5e38' : '#8ce09e';
 
   root.style.setProperty('--bg-app', cfg.bgApp);
   root.style.setProperty('--bg-surface', cfg.bgSurface);
@@ -1035,6 +1076,7 @@ function applyAppearanceToDOM(cfg = getEffectiveAppearance()) {
   root.style.setProperty('--border-color', borderColor);
   root.style.setProperty('--accent-color', cfg.accent);
   root.style.setProperty('--accent-border', cfg.accent);
+  root.style.setProperty('--week-num-color', weekNumColor);
 
   if (cfg.fontPreset === 'clean') {
     root.style.setProperty('--font-display', "'Segoe UI', Arial, sans-serif");
@@ -1212,7 +1254,7 @@ window.addEventListener('popstate', async () => {
   const currentView = getCurrentActiveViewName();
 
   if (currentView === 'calendar') {
-    const salir = await showAppConfirm("Repita la acción Si realmente desea salir. De lo contrario marque 'No'.");
+    const salir = await showAppConfirm("Si realmente desea salir repita la acción (o toque Sí). De lo contrario marque 'no', que es la opción que sí funciona.");
     if (salir) {
       try { window.close(); } catch(err) {}
       window.history.go(-1);
@@ -1373,6 +1415,50 @@ function getMondayOf(date) {
   d.setDate(d.getDate() + diff);
   d.setHours(0,0,0,0);
   return d;
+}
+
+// Determina el mes dominante (mayoría de días de la semana) y su número de semana del mes
+function getDominantMonthWeekInfo(mondayDate) {
+  const counts = {};
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(mondayDate);
+    d.setDate(d.getDate() + i);
+    const key = `${d.getFullYear()}-${d.getMonth()}`;
+    if (!counts[key]) {
+      counts[key] = { year: d.getFullYear(), month: d.getMonth(), count: 0, sampleDay: d.getDate() };
+    }
+    counts[key].count++;
+  }
+
+  const list = Object.values(counts);
+  list.sort((a, b) => {
+    if (b.count !== a.count) return b.count - a.count;
+    return new Date(a.year, a.month, 1) - new Date(b.year, b.month, 1);
+  });
+
+  const dominant = list[0] || {
+    year: mondayDate.getFullYear(),
+    month: mondayDate.getMonth(),
+    sampleDay: mondayDate.getDate()
+  };
+
+  const firstOfMonth = new Date(dominant.year, dominant.month, 1);
+  let startOffset = firstOfMonth.getDay();
+  startOffset = (startOffset === 0) ? 6 : startOffset - 1;
+
+  // Si el mes dominante empieza en esta misma semana, tomamos el día 1; si ya venía de antes, tomamos el día de esa semana en ese mes
+  let dayRef = dominant.sampleDay;
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(mondayDate);
+    d.setDate(d.getDate() + i);
+    if (d.getFullYear() === dominant.year && d.getMonth() === dominant.month) {
+      dayRef = d.getDate();
+      break;
+    }
+  }
+
+  const weekNum = Math.max(1, Math.min(6, Math.ceil((dayRef + startOffset) / 7)));
+  return { year: dominant.year, month: dominant.month, weekNum };
 }
 
 // ==================== PULSACIÓN PROLONGADA (SEMANA Y CALENDARIO) ====================
@@ -2284,6 +2370,7 @@ function renderWeek() {
   grid.innerHTML = '';
 
   const dias = ['Lunes','Martes','Mi\u00e9rcoles','Jueves','Viernes','S\u00e1bado','Domingo'];
+  const mesesCortos = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
   const hoyISO = toISO(new Date());
 
   const end = new Date(weekStartDate);
@@ -2291,7 +2378,18 @@ function renderWeek() {
   document.getElementById('weekLabel').textContent =
     `${weekStartDate.getDate()}/${weekStartDate.getMonth()+1} \u2014 ${end.getDate()}/${end.getMonth()+1}/${end.getFullYear()}`;
 
-  grid.appendChild(document.createElement('div'));
+  const weekInfo = getDominantMonthWeekInfo(weekStartDate);
+  const weekMonthShort = mesesCortos[weekInfo.month] || '';
+  const cornerBox = document.createElement('div');
+  cornerBox.className = 'weekCornerBox';
+  cornerBox.title = `Semana ${weekInfo.weekNum} de ${weekMonthShort} ${weekInfo.year} (por mayoría de días)`;
+  cornerBox.innerHTML = `
+    <span class="weekCornerLabel">Semana</span>
+    <span class="weekCornerNum">${weekInfo.weekNum}</span>
+    <span class="weekCornerMonth">${weekMonthShort}</span>
+  `;
+  grid.appendChild(cornerBox);
+
   for (let i = 0; i < 7; i++) {
     const d = new Date(weekStartDate);
     d.setDate(d.getDate() + i);
