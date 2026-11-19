@@ -9,193 +9,533 @@
 <meta name="theme-color" content="#2a2a3e">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- Tipografía estilizada con respaldo local -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <!-- Librería para exportar a imagen -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
+  :root {
+    --bg-app: #1e1e2e;
+    --bg-surface: #2a2a3e;
+    --bg-card: #26263a;
+    --bg-control: #3a3a52;
+    --bg-control-hover: #4a4a66;
+    --text-main: #e0e0e0;
+    --text-muted: #aaa;
+    --border-color: #444;
+    --accent-color: #4a7c59;
+    --accent-border: #6abf7a;
+    --font-display: 'Outfit', 'Segoe UI', system-ui, sans-serif;
+    --font-body: 'Plus Jakarta Sans', 'Segoe UI', Arial, sans-serif;
+  }
+
   * { box-sizing: border-box; }
+
+  html, body {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
   body {
-    font-family: 'Segoe UI', Arial, sans-serif;
-    background: #1e1e2e; color: #e0e0e0; margin: 0;
+    font-family: var(--font-body);
+    background: var(--bg-app);
+    color: var(--text-main);
+    margin: 0;
     min-height: 100vh;
-    display: flex; flex-direction: column;
+    padding-bottom: 64px;
+    display: flex;
+    flex-direction: column;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
-  
+
   header {
-    background: #2a2a3e; padding: 10px 15px;
-    display: flex; gap: 8px; align-items: center;
-    flex-wrap: wrap; border-bottom: 2px solid #444;
+    background: var(--bg-surface);
+    padding: 10px 15px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    border-bottom: 2px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    max-width: 100%;
   }
-  header h1 { margin: 0; font-size: 18px; flex-grow: 1; display: flex; align-items: center; gap: 6px; }
-  
+
+  header h1 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .brand-title {
+    background: linear-gradient(90deg, var(--text-main), var(--accent-border));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
   /* Botón oculto / discreto en el título */
   #secretResetBtn {
     background: transparent;
     border: none;
-    color: #444;
-    font-size: 10px;
+    color: var(--text-muted);
+    opacity: 0.55;
+    font-size: 11px;
     cursor: pointer;
     padding: 2px 4px;
     border-radius: 3px;
-    transition: color 0.3s;
+    transition: color 0.3s, opacity 0.3s;
   }
   #secretResetBtn:hover {
     color: #ff5555;
-    background: rgba(255, 85, 85, 0.1);
+    opacity: 1;
+    background: rgba(255, 85, 85, 0.12);
   }
-  
+
   button, select, input {
-    font-family: inherit; font-size: 13px; padding: 6px 10px;
-    background: #3a3a52; color: #e0e0e0;
-    border: 1px solid #555; border-radius: 4px; cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    padding: 6px 10px;
+    background: var(--bg-control);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    max-width: 100%;
   }
-  button:hover { background: #4a4a66; }
-  button.active { background: #4a7c59; border-color: #6abf7a; }
-  button.lock-active { background: #7c4a4a; border-color: #bf6a6a; }
+  button:hover { background: var(--bg-control-hover); }
+  button.active { background: var(--accent-color); border-color: var(--accent-border); color: #fff; }
+  button.lock-active { background: #7c4a4a; border-color: #bf6a6a; color: #fff; }
+
+  /* BARRA INFERIOR DE NAVEGACIÓN */
+  .bottomNavBar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 54px;
+    background: var(--bg-surface);
+    border-top: 2px solid var(--border-color);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    padding: 6px 10px;
+    z-index: 50;
+    touch-action: pan-y;
+    user-select: none;
+  }
+  .bottomNavBar .nav-mode-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.3px;
+    border-radius: 6px;
+    padding: 6px 8px;
+  }
 
   /* VISTAS PRINCIPALES */
-  .view-section { display: none; padding: 15px; flex-grow: 1; }
+  .view-section {
+    display: none;
+    padding: 15px;
+    flex-grow: 1;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
   .view-section.active-view { display: block; }
 
   /* VISTA CALENDARIO */
   .calHeader {
-    display: flex; justify-content: space-between;
-    align-items: center; margin-bottom: 12px;
-    flex-wrap: wrap; gap: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
   }
   .calHeaderGroup { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-  .calGrid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
-  .calDayName { text-align: center; font-weight: bold; color: #aaa; padding: 4px; font-size: 12px; }
-  .calDay {
-    background: #2a2a3e; border-radius: 6px; padding: 6px;
-    min-height: 85px; cursor: pointer; border: 2px solid transparent;
-    overflow: hidden; font-size: 11px; display: flex; flex-direction: column;
+  .calGrid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 5px;
+    width: 100%;
   }
-  .calDay:hover { border-color: #6abf7a; }
-  .calDay.otherMonth { opacity: 0.3; }
-  .calDay.today { border-color: #ffb84d; }
+  .calDayName {
+    text-align: center;
+    font-weight: bold;
+    color: var(--text-muted);
+    padding: 4px;
+    font-size: 12px;
+    min-width: 0;
+  }
+  .calDay {
+    background: var(--bg-surface);
+    border-radius: 6px;
+    padding: 6px;
+    min-height: 85px;
+    min-width: 0;
+    cursor: pointer;
+    border: 1.5px solid var(--border-color);
+    overflow: hidden;
+    font-size: 11px;
+    display: flex;
+    flex-direction: column;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+  .calDay:hover { border-color: var(--accent-border); }
+  .calDay.otherMonth { opacity: 0.42; }
+  .calDay.today { border-color: #d98200; border-width: 2px; }
   .calDay .dayNum { font-weight: bold; font-size: 14px; margin-bottom: 2px; }
-  .calDay .mini { font-size: 9px; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 1px 3px; border-radius: 3px; color: #fff; }
+  .calDay .mini {
+    font-size: 9px;
+    margin-top: 1px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 1px 3px;
+    border-radius: 3px;
+    color: #fff;
+  }
   .calDay .mini.eval { color: #ffcc66; font-weight: bold; background: #443b22; }
-  .calDay .mini.note { color: #cc99ff; font-style: italic; background: #332244; }
+  .calDay .mini.note { color: #e2b8ff; font-style: italic; background: #332244; }
 
   /* VISTA DÍA */
   .dayHeader {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 10px; flex-wrap: wrap; gap: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
   }
-  .dayHeader h2 { margin: 0; font-size: 16px; }
+  .dayDateNav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+  .dayHeader h2 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 16px;
+    min-width: 0;
+  }
 
-  .cols { display: grid; grid-template-columns: 90px 1fr 1fr 1fr; gap: 4px; width: 100%; }
-  .colHead { text-align: center; font-weight: bold; padding: 6px; border-radius: 4px; background: #2a2a3e; font-size: 12px; }
+  .dayGridWrapper {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .cols {
+    display: grid;
+    grid-template-columns: 84px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+    gap: 4px;
+    width: 100%;
+    max-width: 100%;
+  }
+  .colHead {
+    text-align: center;
+    font-weight: bold;
+    padding: 6px 4px;
+    border-radius: 4px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    font-size: 12px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   .colHead.trabajo { background: #4a2a2a; color: #ff9a9a; }
   .colHead.estudio { background: #2a3a4a; color: #9ac9ff; }
   .colHead.resultado { background: #2a4a2a; color: #9aff9a; }
 
   .hourLabel {
-    text-align: right; padding: 2px 6px; font-size: 10px; color: #bbb;
-    line-height: 24px; white-space: nowrap;
+    text-align: right;
+    padding: 2px 6px;
+    font-size: 10px;
+    color: var(--text-muted);
+    line-height: 24px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
   }
   .cell {
-    height: 24px; border-radius: 3px; background: #26263a;
-    border: 1px solid #333; cursor: pointer;
-    display: flex; align-items: center; padding: 0 4px;
-    font-size: 10px; overflow: hidden;
-    white-space: nowrap; text-overflow: ellipsis;
-    user-select: none; position: relative; color: #fff;
+    height: 24px;
+    min-width: 0;
+    max-width: 100%;
+    border-radius: 3px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 0 4px;
+    font-size: 10px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    user-select: none;
+    position: relative;
+    color: #fff;
   }
   .cell.estudio { background: #354a5c; border-color: #4a6a8a; }
   .cell.resultado { cursor: default; }
 
-  .brushBar { display: flex; gap: 6px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; font-size: 12px; }
+  .brushBar {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    width: 100%;
+  }
   .dayTools { margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap; }
 
   /* VISTA SEMANAL */
   .weekHeader {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 10px; flex-wrap: wrap; gap: 8px;
-  }
-  .weekGrid {
-    display: grid; grid-template-columns: 80px repeat(7, 1fr); gap: 3px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 8px;
     width: 100%;
   }
-  .weekColHead {
-    text-align: center; font-weight: bold; padding: 4px 2px; border-radius: 4px;
-    background: #2a2a3e; cursor: pointer; font-size: 11px;
+  .weekSwipeZone {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    touch-action: pan-y;
   }
-  .weekColHead.today { background: #4a3a1a; border: 1px solid #ffb84d; }
-  .weekColHead .wd { display: block; font-size: 9px; color: #aaa; }
+  .weekGrid {
+    display: grid;
+    grid-template-columns: 72px repeat(7, minmax(0, 1fr));
+    gap: 3px;
+    width: 100%;
+    max-width: 100%;
+  }
+  .weekColHead {
+    text-align: center;
+    font-weight: bold;
+    padding: 4px 2px;
+    border-radius: 4px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    font-size: 11px;
+    min-width: 0;
+    overflow: hidden;
+  }
+  .weekColHead.today { background: #4a3a1a; border: 1px solid #ffb84d; color: #fff; }
+  .weekColHead .wd { display: block; font-size: 9px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .weekColHead .dn { display: block; font-size: 13px; }
-  .weekColHead .btnOpenNotesWeek { background: #4a7c59; border: none; font-size: 8px; padding: 2px; margin-top: 2px; border-radius: 2px; width: 100%; }
+  .weekColHead .btnOpenNotesWeek { background: var(--accent-color); color: #fff; border: none; font-size: 8px; padding: 2px; margin-top: 2px; border-radius: 2px; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
   .weekHourLabel {
-    text-align: right; padding: 2px 4px; font-size: 8px; color: #bbb;
-    line-height: 20px; white-space: nowrap;
+    text-align: right;
+    padding: 2px 4px;
+    font-size: 8px;
+    color: var(--text-muted);
+    line-height: 20px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
   }
   .weekCell {
-    height: 20px; border-radius: 2px; background: #26263a;
-    border: 1px solid #333; cursor: pointer;
-    font-size: 8px; overflow: hidden;
-    white-space: nowrap; text-overflow: ellipsis;
-    padding: 0 2px; line-height: 18px; position: relative; color: #fff;
+    height: 20px;
+    min-width: 0;
+    max-width: 100%;
+    border-radius: 2px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    font-size: 8px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    padding: 0 2px;
+    line-height: 18px;
+    position: relative;
+    color: #fff;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
   }
-  .weekCell.mixed { background: #3a3a52; border-color: #666; }
+  .weekCell.mixed { background: var(--bg-control); border-color: var(--border-color); }
 
   /* MODALES Y ELEMENTOS AUXILIARES */
-  .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; justify-content: center; align-items: center; }
+  .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.72); z-index: 100; justify-content: center; align-items: center; }
   .modal.open { display: flex; }
-  .modalBox { background: #2a2a3e; padding: 15px; border-radius: 8px; max-width: 500px; width: 92%; max-height: 90vh; overflow-y: auto; }
-  .modalBox h3 { margin-top: 0; }
+  .modalBox {
+    background: var(--bg-surface);
+    color: var(--text-main);
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    max-width: 500px;
+    width: 92%;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .modalBox h3 { margin-top: 0; font-family: var(--font-display); }
   .modalBox label { display: block; margin: 8px 0 2px; font-size: 13px; }
-  .modalBox input[type=text], .modalBox select, .modalBox textarea { width: 100%; padding: 6px; background: #3a3a52; color: #e0e0e0; border: 1px solid #555; border-radius: 4px; }
+  .modalBox input[type=text], .modalBox select, .modalBox textarea {
+    width: 100%;
+    padding: 6px;
+    background: var(--bg-control);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+  }
   .modalBox textarea { resize: vertical; height: 70px; }
-  .modalBox .row { display: flex; gap: 8px; margin-top: 15px; }
-  .hint { font-size: 12px; color: #aaa; }
+  .modalBox .row { display: flex; gap: 8px; margin-top: 15px; flex-wrap: wrap; }
+  .hint { font-size: 12px; color: var(--text-muted); }
+
+  .inspectorSection {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 10px;
+    margin-top: 10px;
+    font-size: 13px;
+  }
+  .inspectorSectionTitle {
+    font-weight: 700;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+  .inspectorBadge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    margin: 2px 4px 2px 0;
+  }
+
+  .themeSwatches {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .themeColorField {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 8px;
+  }
+  .themeColorField label {
+    margin: 0 0 6px;
+    font-size: 12px;
+  }
+  .themeColorField input[type=color] {
+    width: 100%;
+    height: 34px;
+    padding: 2px;
+  }
 
   /* MODAL DE ALERTA PERSONALIZADO */
   #customAlertModal .modalBox { max-width: 380px; text-align: center; }
-  #customAlertText { font-size: 14px; margin: 15px 0; color: #f0f0f0; line-height: 1.4; }
+  #customAlertText { font-size: 14px; margin: 15px 0; line-height: 1.4; }
 
-  .evalItemRow, .noteItemRow { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; font-size: 12px; background: #2f2f45; padding: 5px 8px; border-radius: 4px; }
-  .evalItemRow.done span { text-decoration: line-through; color: #888; }
+  .evalItemRow, .noteItemRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+    font-size: 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    padding: 5px 8px;
+    border-radius: 4px;
+  }
+  .evalItemRow.done span { text-decoration: line-through; opacity: 0.6; }
   .evalItemRow input[type=checkbox] { cursor: pointer; }
   .evalItemRow .delEval, .noteItemRow .delNote { margin-left: auto; background: #6a2a2a; border: none; color: #fff; padding: 2px 6px; border-radius: 3px; font-size: 10px; cursor: pointer; }
 
-  .patternItem, .subjectItem { background: #222233; border: 1px solid #444; border-radius: 6px; padding: 10px; margin-bottom: 10px; position: relative; }
-  .patternItem .delPat, .subjectItem .delSub { position: absolute; top: 10px; right: 10px; background: #6a2a2a; border-color: #8a3a3a; padding: 2px 8px; font-size: 11px; cursor: pointer; }
+  .patternItem, .subjectItem {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 10px;
+    margin-bottom: 10px;
+    position: relative;
+  }
+  .patternItem .delPat, .subjectItem .delSub { position: absolute; top: 10px; right: 10px; background: #6a2a2a; border-color: #8a3a3a; color: #fff; padding: 2px 8px; font-size: 11px; cursor: pointer; }
 
   /* CALENDARIO MANUAL PARA DÍAS SUELTOS */
-  .manualCalGrid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-top: 10px; }
-  .manualDayName { text-align: center; font-weight: bold; color: #aaa; font-size: 11px; padding: 2px; }
+  .manualCalGrid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; margin-top: 10px; }
+  .manualDayName { text-align: center; font-weight: bold; color: var(--text-muted); font-size: 11px; padding: 2px; }
   .manualDayCell {
-    background: #1e1e2e; border: 1px solid #444; border-radius: 4px;
-    min-height: 45px; padding: 4px; cursor: pointer; font-size: 10px;
-    display: flex; flex-direction: column; justify-content: space-between;
+    background: var(--bg-app);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    min-height: 45px;
+    padding: 4px;
+    cursor: pointer;
+    font-size: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
   }
-  .manualDayCell:hover { border-color: #6abf7a; }
-  .manualDayCell.otherMonth { opacity: 0.2; }
+  .manualDayCell:hover { border-color: var(--accent-border); }
+  .manualDayCell.otherMonth { opacity: 0.25; }
   .manualDayCell .mNum { font-weight: bold; font-size: 11px; }
   .manualDayMarks { display: flex; flex-wrap: wrap; gap: 2px; margin-top: 2px; }
   .manualMarkDot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
 
   .blkRow { display: grid; grid-template-columns: 1fr 1fr 1fr 30px; gap: 4px; margin-bottom: 4px; align-items: center; }
   .blkRow input { width: 100%; }
-  .blkRow .del { background: #6a2a2a; border-color: #8a3a3a; padding: 4px 8px; }
-  .blkHead { display: grid; grid-template-columns: 1fr 1fr 1fr 30px; gap: 4px; font-size: 12px; color: #aaa; margin-bottom: 4px; }
+  .blkRow .del { background: #6a2a2a; border-color: #8a3a3a; color: #fff; padding: 4px 8px; }
+  .blkHead { display: grid; grid-template-columns: 1fr 1fr 1fr 30px; gap: 4px; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
 
   @media (max-width: 768px) {
     header { padding: 8px 10px; }
-    header h1 { font-size: 16px; }
+    header h1 { font-size: 17px; }
     button, select, input { font-size: 11px; padding: 4px 6px; }
     .view-section { padding: 8px; }
     .calDay { min-height: 60px; padding: 3px; font-size: 9px; }
     .calDay .dayNum { font-size: 11px; }
+    .cols { grid-template-columns: 62px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); gap: 2px; }
+    .weekGrid { grid-template-columns: 52px repeat(7, minmax(0, 1fr)); gap: 2px; }
+    .themeSwatches { grid-template-columns: 1fr; }
   }
 
   @media (max-height: 500px) and (orientation: landscape) {
+    body { padding-bottom: 46px; }
+    .bottomNavBar { height: 42px; padding: 4px 8px; }
+    .bottomNavBar .nav-mode-btn { font-size: 11px; padding: 3px 6px; }
     header { padding: 4px 10px; }
-    header h1 { font-size: 14px; }
-    .weekGrid { grid-template-columns: 65px repeat(7, 1fr); gap: 2px; }
-    .cols { grid-template-columns: 75px 1fr 1fr 1fr; gap: 2px; }
+    header h1 { font-size: 15px; }
+    .weekGrid { grid-template-columns: 52px repeat(7, minmax(0, 1fr)); gap: 2px; }
+    .cols { grid-template-columns: 62px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); gap: 2px; }
     .hourLabel, .weekHourLabel { font-size: 8px; line-height: 16px; padding: 0 2px; }
     .cell { height: 16px; font-size: 8px; }
     .weekCell { height: 16px; font-size: 7px; line-height: 14px; }
@@ -210,17 +550,14 @@
 
 <header>
   <h1>
-    My Kalend Temps
+    <span class="brand-title">My Kalend Temps</span>
     <button id="secretResetBtn" title="Restablecer sistema" onclick="triggerSecretReset()">⚙</button>
   </h1>
-  <button id="tabCalendar" class="tab active">Calendario</button>
-  <button id="tabWeek" class="tab">Semana</button>
-  <button id="tabDay" class="tab">D&iacute;a</button>
-  <button id="lockBtn" class="lock-active" title="Bloquear o desbloquear edici&oacute;n">&#128275; Bloqueado (Solo ver)</button>
-  <button id="openSubjects" style="background:#2a3a4a; border-color:#4a6a8a;">Configurar Materias</button>
+  <button id="openSubjects" style="background:#2a3a4a; border-color:#4a6a8a; color:#fff;">Configurar Materias</button>
   <button id="openBlocks" style="display:none;">Bloques horarios</button>
   <button id="exportBtn">Exportar</button>
   <button id="importBtn">Importar</button>
+  <button id="openAppearanceBtn" style="background:#3d3254; border-color:#725ca1; color:#fff;">Apariencia</button>
   <input type="file" id="importFile" style="display:none" accept=".json">
 </header>
 
@@ -234,26 +571,32 @@
       <button id="calCurrentMonth">Mes actual</button>
     </div>
     <div class="calHeaderGroup">
-      <select id="calFilterWork" class="globalWorkFilter" title="Filtrar trabajo / usuario" style="background:#3a3a52; color:#e0e0e0; border:1px solid #555; border-radius:4px; padding:6px;">
+      <select id="calFilterWork" class="globalWorkFilter" title="Filtrar trabajo / usuario">
         <option value="">Mostrar: Todos</option>
       </select>
-      <button id="openPattern" style="background:#4a2a6a; border-color:#7a4abf;">Configurar patrones</button>
-      <button id="exportCalImg" style="background:#2a4a3e; border-color:#3a6a5a;">Guardar Calendario (Imagen)</button>
+      <button id="openPattern" style="background:#4a2a6a; border-color:#7a4abf; color:#fff;">Configurar patrones</button>
+      <button id="exportCalImg" style="background:#2a4a3e; border-color:#3a6a5a; color:#fff;">Guardar Calendario (Imagen)</button>
     </div>
   </div>
+  <div class="hint" style="margin-bottom:8px;">Toca un día para abrirlo o deja presionado para ver su resumen completo.</div>
   <div class="calGrid" id="calGrid"></div>
 </div>
 
 <!-- VISTA DÍA -->
 <div id="dayView" class="view-section">
   <div class="dayHeader">
-    <button id="backToCal">&laquo; Volver al calendario</button>
-    <h2 id="dayTitle">&mdash;</h2>
-    <div style="display:flex; gap:8px; align-items:center;">
-      <select id="dayFilterWork" class="globalWorkFilter" title="Filtrar trabajo" style="background:#3a3a52; color:#e0e0e0; border:1px solid #555; border-radius:4px; padding:6px;">
+    <div class="dayDateNav">
+      <button id="prevDayBtn" title="Día anterior">&laquo;</button>
+      <h2 id="dayTitle">&mdash;</h2>
+      <button id="nextDayBtn" title="Día siguiente">&raquo;</button>
+      <button id="dayTodayBtn">Hoy</button>
+    </div>
+    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+      <button id="lockBtn" class="lock-active" title="Bloquear o desbloquear edici&oacute;n de celdas">&#128274; Bloqueado (Solo ver)</button>
+      <select id="dayFilterWork" class="globalWorkFilter" title="Filtrar trabajo">
         <option value="">Mostrar: Todos</option>
       </select>
-      <button id="openDayNotesModal" style="background:#4a7c59; border:none; font-weight:bold;">+ Notas y Evaluaciones</button>
+      <button id="openDayNotesModal" style="background:#4a7c59; border:none; color:#fff; font-weight:bold;">+ Notas y Evaluaciones</button>
       <select id="dayPriority">
         <option value="trabajo">Prioridad día: Trabajo</option>
         <option value="estudio">Prioridad día: Estudio</option>
@@ -266,18 +609,20 @@
     <select id="dayWorkSelect"></select>
     <label>Estudio (Materia):</label>
     <select id="daySubjectSelect"></select>
-    <span class="hint" id="editHint">Modo bloqueo activo: no se puede editar ni pintar.</span>
+    <span class="hint" id="editHint">Modo bloqueo activo: no se puede editar ni pintar celdas.</span>
   </div>
 
-  <div class="cols" id="cols"></div>
+  <div class="dayGridWrapper">
+    <div class="cols" id="cols"></div>
+  </div>
 
   <div class="dayTools" id="dayToolsContainer" style="display:none; margin-top:15px;">
     <button id="fillTrabajoDay">Rellenar Trabajo (todo)</button>
     <button id="clearTrabajo">Limpiar Trabajo</button>
-    <button id="applyWorkHoursToPatternDays" style="background:#4a5c7c; border-color:#6a8abf;">Aplicar horas de este trabajo a sus días</button>
+    <button id="applyWorkHoursToPatternDays" style="background:#4a5c7c; border-color:#6a8abf; color:#fff;">Aplicar horas de este trabajo a sus días</button>
     <button id="fillEstudioDay">Rellenar Estudio (todo)</button>
     <button id="clearEstudio">Limpiar Estudio</button>
-    <button id="repeatStudy" style="background:#5c4a7c; border-color:#7a6abf;">Repetir estudio semanal</button>
+    <button id="repeatStudy" style="background:#5c4a7c; border-color:#7a6abf; color:#fff;">Repetir estudio semanal</button>
     <button id="clearDay">Limpiar d&iacute;a completo</button>
   </div>
 </div>
@@ -285,20 +630,98 @@
 <!-- VISTA SEMANAL -->
 <div id="weekView" class="view-section">
   <div class="weekHeader">
-    <div style="display:flex; gap:8px; align-items:center;">
+    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
       <button id="prevWeek">&laquo;</button>
       <span id="weekLabel" style="font-size:16px; font-weight:bold; margin:0 6px;"></span>
       <button id="nextWeek">&raquo;</button>
       <button id="weekToday">Ir a semana actual</button>
     </div>
-    <div style="display:flex; gap:8px; align-items:center;">
-      <select id="weekFilterWork" class="globalWorkFilter" title="Filtrar trabajo" style="background:#3a3a52; color:#e0e0e0; border:1px solid #555; border-radius:4px; padding:6px;">
+    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+      <select id="weekFilterWork" class="globalWorkFilter" title="Filtrar trabajo">
         <option value="">Mostrar: Todos</option>
       </select>
-      <button id="exportWeekImg" style="background:#2a4a3e; border-color:#3a6a5a;">Guardar Semana (Imagen)</button>
+      <button id="exportWeekImg" style="background:#2a4a3e; border-color:#3a6a5a; color:#fff;">Guardar Semana (Imagen)</button>
     </div>
   </div>
-  <div class="weekGrid" id="weekGrid"></div>
+  <div class="hint" style="margin-bottom:8px;">Toca una hora para ir al día o deja presionado para ver materia, notas y evaluaciones.</div>
+  <div class="weekSwipeZone" id="weekSwipeZone">
+    <div class="weekGrid" id="weekGrid"></div>
+  </div>
+</div>
+
+<!-- BARRA INFERIOR DE MODOS -->
+<nav id="bottomNavBar" class="bottomNavBar" aria-label="Cambiar vista">
+  <button id="navCalendar" class="nav-mode-btn active">Calendario</button>
+  <button id="navWeek" class="nav-mode-btn">Semana</button>
+  <button id="navDay" class="nav-mode-btn">D&iacute;a</button>
+</nav>
+
+<!-- Modal Inspector por Pulsación Prolongada (Semana / Calendario) -->
+<div id="longPressInspectorModal" class="modal">
+  <div class="modalBox">
+    <h3 id="inspectorTitle">Detalle</h3>
+    <div id="inspectorSubtitle" class="hint"></div>
+    <div id="inspectorBody"></div>
+    <div class="row" style="margin-top:16px;">
+      <button type="button" id="inspectorOpenNotesBtn" style="background:#4a7c59; border-color:#6abf7a; color:#fff;">Notas y Evaluaciones</button>
+      <button type="button" id="inspectorGoDayBtn" style="background:#3a527c; border-color:#6284bd; color:#fff;">Abrir en Día</button>
+      <button type="button" id="inspectorCloseBtn" style="flex:1;">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Apariencia y Colores -->
+<div id="appearanceModal" class="modal">
+  <div class="modalBox">
+    <h3>Apariencia y Colores</h3>
+    <p class="hint">Alterna entre modo oscuro y claro o ajusta los colores del calendario y la letra.</p>
+
+    <label>Modo base:</label>
+    <div style="display:flex; gap:8px; margin-bottom:10px;">
+      <button type="button" id="themeDarkPresetBtn" style="flex:1;">Modo Oscuro</button>
+      <button type="button" id="themeLightPresetBtn" style="flex:1;">Modo Claro</button>
+    </div>
+
+    <div class="themeSwatches">
+      <div class="themeColorField">
+        <label>Fondo general</label>
+        <input type="color" id="cfgBgApp">
+      </div>
+      <div class="themeColorField">
+        <label>Color de letra / texto</label>
+        <input type="color" id="cfgTextMain">
+      </div>
+      <div class="themeColorField">
+        <label>Celdas del calendario y paneles</label>
+        <input type="color" id="cfgBgSurface">
+      </div>
+      <div class="themeColorField">
+        <label>Celdas de horas y tarjetas</label>
+        <input type="color" id="cfgBgCard">
+      </div>
+      <div class="themeColorField">
+        <label>Botones / controles</label>
+        <input type="color" id="cfgBgControl">
+      </div>
+      <div class="themeColorField">
+        <label>Color de acento</label>
+        <input type="color" id="cfgAccent">
+      </div>
+    </div>
+
+    <label>Tipografía:</label>
+    <select id="cfgFontFamily">
+      <option value="modern">Moderna (Outfit + Plus Jakarta Sans)</option>
+      <option value="clean">Limpia / Clásica (Segoe UI / Arial)</option>
+      <option value="editorial">Editorial / Legible (Trebuchet / Sans)</option>
+    </select>
+
+    <div class="row" style="margin-top:18px;">
+      <button type="button" id="themeResetBtn" style="background:#5c4a35;">Restablecer</button>
+      <button type="button" id="themeSaveBtn" style="flex:1; background:#4a7c59; border-color:#6abf7a; color:#fff;">Guardar</button>
+      <button type="button" id="themeCancelBtn">Cancelar</button>
+    </div>
+  </div>
 </div>
 
 <!-- Ventana Modal de Notas y Evaluaciones del Día -->
@@ -306,13 +729,13 @@
   <div class="modalBox">
     <h3 id="modalNotesTitle">Notas y Evaluaciones</h3>
     
-    <h4 style="margin:10px 0 4px; color:#ffcc66; font-size:14px;">Evaluaciones / Tareas</h4>
+    <h4 style="margin:10px 0 4px; color:#d98200; font-size:14px;">Evaluaciones / Tareas</h4>
     <div id="modalEvalsList"></div>
-    <button id="openAddEvalModal" style="width:100%; margin-top:6px; background:#4a7c59; border:none; font-size:12px;">+ A&ntilde;adir Evaluaci&oacute;n</button>
+    <button id="openAddEvalModal" style="width:100%; margin-top:6px; background:#4a7c59; color:#fff; border:none; font-size:12px;">+ A&ntilde;adir Evaluaci&oacute;n</button>
 
-    <h4 style="margin:15px 0 4px; color:#cc99ff; font-size:14px;">Notas Libres del D&iacute;a</h4>
+    <h4 style="margin:15px 0 4px; color:#8b4fd9; font-size:14px;">Notas Libres del D&iacute;a</h4>
     <div id="modalNotesList" style="margin-bottom:8px;"></div>
-    <textarea id="modalNoteInput" placeholder="Escribe una nota para este d&iacute;a..." style="width:100%; background:#1e1e2e; color:#e0e0e0; border:1px solid #555; padding:6px; border-radius:4px; font-family:inherit; resize:vertical; height:50px;"></textarea>
+    <textarea id="modalNoteInput" placeholder="Escribe una nota para este d&iacute;a..." style="width:100%; padding:6px; border-radius:4px; resize:vertical; height:50px;"></textarea>
     <button id="saveModalNoteBtn" style="width:100%; margin-top:6px; font-size:12px;">Agregar Nota</button>
 
     <div class="row" style="margin-top:20px;">
@@ -360,8 +783,8 @@
     <div class="row">
       <button id="patAddBtn">+ A&ntilde;adir trabajo</button>
     </div>
-    <div class="row" style="margin-top:15px; border-top:1px solid #444; padding-top:10px;">
-      <button id="openManualDaysModal" style="background:#4a5c7c; border-color:#6a8abf; width:100%;">📅 Marcar días sueltos (sin patrón)</button>
+    <div class="row" style="margin-top:15px; border-top:1px solid var(--border-color); padding-top:10px;">
+      <button id="openManualDaysModal" style="background:#4a5c7c; border-color:#6a8abf; color:#fff; width:100%;">📅 Marcar días sueltos (sin patrón)</button>
     </div>
     <div class="row" style="margin-top:20px;">
       <button id="patSave">Guardar</button>
@@ -435,7 +858,7 @@
     <h3 id="customAlertTitle" style="color: #ffb84d; margin-bottom: 5px;">Aviso</h3>
     <div id="customAlertText"></div>
     <div class="row" style="margin-top: 15px;">
-      <button id="customAlertOkBtn" style="width: 100%; background: #4a7c59; border-color: #6abf7a;">Aceptar</button>
+      <button id="customAlertOkBtn" style="width: 100%; background: #4a7c59; border-color: #6abf7a; color: #fff;">Aceptar</button>
     </div>
   </div>
 </div>
@@ -444,10 +867,10 @@
 <div id="customConfirmModal" class="modal">
   <div class="modalBox" style="max-width: 380px; text-align: center;">
     <h3 style="color: #ffcc66; margin-bottom: 5px;">Confirmación</h3>
-    <div id="customConfirmText" style="font-size: 14px; margin: 15px 0; color: #f0f0f0; line-height: 1.4;"></div>
+    <div id="customConfirmText" style="font-size: 14px; margin: 15px 0; line-height: 1.4;"></div>
     <div class="row" style="margin-top: 15px; display: flex; gap: 10px;">
-      <button id="customConfirmYesBtn" style="flex: 1; background: #4a7c59; border-color: #6abf7a;">Sí</button>
-      <button id="customConfirmNoBtn" style="flex: 1; background: #6a2a2a; border-color: #8a3a3a;">No</button>
+      <button id="customConfirmYesBtn" style="flex: 1; background: #4a7c59; border-color: #6abf7a; color: #fff;">Sí</button>
+      <button id="customConfirmNoBtn" style="flex: 1; background: #6a2a2a; border-color: #8a3a3a; color: #fff;">No</button>
     </div>
   </div>
 </div>
@@ -497,6 +920,29 @@ function showAppConfirm(message) {
 
 // ==================== ESTADO ====================
 const STORAGE_KEY = 'miHorario_v1';
+
+const DARK_THEME_DEFAULTS = {
+  mode: 'dark',
+  bgApp: '#1e1e2e',
+  bgSurface: '#2a2a3e',
+  bgCard: '#26263a',
+  bgControl: '#3a3a52',
+  textMain: '#e0e0e0',
+  accent: '#4a7c59',
+  fontPreset: 'modern'
+};
+
+const LIGHT_THEME_DEFAULTS = {
+  mode: 'light',
+  bgApp: '#e4e9f2',
+  bgSurface: '#ffffff',
+  bgCard: '#f4f7fc',
+  bgControl: '#dde4f0',
+  textMain: '#182030',
+  accent: '#2f7a57',
+  fontPreset: 'modern'
+};
+
 let state = {
   globalPriority: 'trabajo',
   patterns: [],
@@ -504,10 +950,12 @@ let state = {
   jobHourTemplates: {},
   manualDays: {},
   blocks: [],
-  days: {}
+  days: {},
+  appearance: Object.assign({}, DARK_THEME_DEFAULTS)
 };
 let currentDate = '';
 let modalTargetISO = '';
+let inspectorTargetISO = '';
 let calYear, calMonth;
 let manYear, manMonth;
 let weekStartDate = null;
@@ -565,6 +1013,106 @@ function defaultBlocks() {
   return arr;
 }
 
+// ==================== APARIENCIA Y TEMAS ====================
+function getEffectiveAppearance() {
+  return Object.assign({}, DARK_THEME_DEFAULTS, state.appearance || {});
+}
+
+function applyAppearanceToDOM(cfg = getEffectiveAppearance()) {
+  const root = document.documentElement;
+  const isLight = cfg.mode === 'light';
+  const mutedColor = isLight ? '#4f5b70' : '#aaa';
+  const controlHover = isLight ? '#cbd5e6' : '#4a4a66';
+  const borderColor = isLight ? '#b4c0d4' : '#444';
+
+  root.style.setProperty('--bg-app', cfg.bgApp);
+  root.style.setProperty('--bg-surface', cfg.bgSurface);
+  root.style.setProperty('--bg-card', cfg.bgCard);
+  root.style.setProperty('--bg-control', cfg.bgControl);
+  root.style.setProperty('--bg-control-hover', controlHover);
+  root.style.setProperty('--text-main', cfg.textMain);
+  root.style.setProperty('--text-muted', mutedColor);
+  root.style.setProperty('--border-color', borderColor);
+  root.style.setProperty('--accent-color', cfg.accent);
+  root.style.setProperty('--accent-border', cfg.accent);
+
+  if (cfg.fontPreset === 'clean') {
+    root.style.setProperty('--font-display', "'Segoe UI', Arial, sans-serif");
+    root.style.setProperty('--font-body', "'Segoe UI', Arial, sans-serif");
+  } else if (cfg.fontPreset === 'editorial') {
+    root.style.setProperty('--font-display', "Georgia, 'Segoe UI', serif");
+    root.style.setProperty('--font-body', "'Trebuchet MS', 'Segoe UI', sans-serif");
+  } else {
+    root.style.setProperty('--font-display', "'Outfit', 'Segoe UI', system-ui, sans-serif");
+    root.style.setProperty('--font-body', "'Plus Jakarta Sans', 'Segoe UI', Arial, sans-serif");
+  }
+
+  const metaTheme = document.querySelector('meta[name="theme-color"]');
+  if (metaTheme) metaTheme.setAttribute('content', cfg.bgSurface);
+}
+
+const appearanceModal = document.getElementById('appearanceModal');
+
+function syncAppearanceModalInputs(cfg) {
+  document.getElementById('cfgBgApp').value = cfg.bgApp;
+  document.getElementById('cfgTextMain').value = cfg.textMain;
+  document.getElementById('cfgBgSurface').value = cfg.bgSurface;
+  document.getElementById('cfgBgCard').value = cfg.bgCard;
+  document.getElementById('cfgBgControl').value = cfg.bgControl;
+  document.getElementById('cfgAccent').value = cfg.accent;
+  document.getElementById('cfgFontFamily').value = cfg.fontPreset || 'modern';
+  appearanceModal.dataset.mode = cfg.mode || 'dark';
+}
+
+document.getElementById('openAppearanceBtn').onclick = () => {
+  syncAppearanceModalInputs(getEffectiveAppearance());
+  appearanceModal.classList.add('open');
+};
+
+document.getElementById('themeDarkPresetBtn').onclick = () => {
+  const currentFont = document.getElementById('cfgFontFamily').value;
+  syncAppearanceModalInputs(Object.assign({}, DARK_THEME_DEFAULTS, { fontPreset: currentFont }));
+};
+
+document.getElementById('themeLightPresetBtn').onclick = () => {
+  const currentFont = document.getElementById('cfgFontFamily').value;
+  syncAppearanceModalInputs(Object.assign({}, LIGHT_THEME_DEFAULTS, { fontPreset: currentFont }));
+};
+
+document.getElementById('themeResetBtn').onclick = () => {
+  syncAppearanceModalInputs(Object.assign({}, DARK_THEME_DEFAULTS));
+};
+
+document.getElementById('themeCancelBtn').onclick = () => {
+  applyAppearanceToDOM(getEffectiveAppearance());
+  appearanceModal.classList.remove('open');
+};
+
+document.getElementById('themeSaveBtn').onclick = () => {
+  const bgApp = document.getElementById('cfgBgApp').value;
+  const textMain = document.getElementById('cfgTextMain').value;
+  const bgSurface = document.getElementById('cfgBgSurface').value;
+  const bgCard = document.getElementById('cfgBgCard').value;
+  const bgControl = document.getElementById('cfgBgControl').value;
+  const accent = document.getElementById('cfgAccent').value;
+  const fontPreset = document.getElementById('cfgFontFamily').value;
+  const mode = appearanceModal.dataset.mode || 'dark';
+
+  state.appearance = {
+    mode,
+    bgApp,
+    textMain,
+    bgSurface,
+    bgCard,
+    bgControl,
+    accent,
+    fontPreset
+  };
+  save();
+  applyAppearanceToDOM(state.appearance);
+  appearanceModal.classList.remove('open');
+};
+
 // ==================== PERSISTENCIA Y MIGRACIÓN DE MÚLTIPLES TRABAJOS ====================
 function save() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
@@ -615,8 +1163,8 @@ function load() {
     if (!state.jobHourTemplates) state.jobHourTemplates = {};
     if (!state.manualDays) state.manualDays = {};
     if (!state.blocks || state.blocks.length === 0) state.blocks = defaultBlocks();
+    if (!state.appearance) state.appearance = Object.assign({}, DARK_THEME_DEFAULTS);
 
-    // Migrar todos los días existentes a arreglo de trabajos por bloque
     for (const iso in state.days) {
       normalizeDayWorkData(state.days[iso]);
     }
@@ -626,8 +1174,10 @@ function load() {
     state.subjects = [];
     state.jobHourTemplates = {};
     state.manualDays = {};
+    state.appearance = Object.assign({}, DARK_THEME_DEFAULTS);
     console.warn('No se pudo cargar', e);
   }
+  applyAppearanceToDOM(getEffectiveAppearance());
 }
 
 // ==================== BORRADO TOTAL SECRETO ====================
@@ -651,7 +1201,7 @@ if (!window.history.state || window.history.state.init !== true) {
   window.history.pushState({ view: 'calendar', init: true }, '', '');
 }
 
-window.addEventListener('popstate', async (e) => {
+window.addEventListener('popstate', async () => {
   const openModals = document.querySelectorAll('.modal.open');
   if (openModals.length > 0) {
     openModals.forEach(m => m.classList.remove('open'));
@@ -662,7 +1212,7 @@ window.addEventListener('popstate', async (e) => {
   const currentView = getCurrentActiveViewName();
 
   if (currentView === 'calendar') {
-    const salir = await showAppConfirm("Si realmente desea salir repita la acción (o toque Sí). De lo contrario marque 'no', que es la opción que sí funciona.");
+    const salir = await showAppConfirm("Repita la acción Si realmente desea salir. De lo contrario marque 'No'.");
     if (salir) {
       try { window.close(); } catch(err) {}
       window.history.go(-1);
@@ -680,12 +1230,16 @@ function getCurrentActiveViewName() {
   return 'calendar';
 }
 
+function setActiveNavButtons(viewName) {
+  document.getElementById('navCalendar').classList.toggle('active', viewName === 'calendar');
+  document.getElementById('navWeek').classList.toggle('active', viewName === 'week');
+  document.getElementById('navDay').classList.toggle('active', viewName === 'day');
+}
+
 function switchToCalendarView(pushHistory = true) {
   document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active-view'));
   document.getElementById('calendarView').classList.add('active-view');
-  document.getElementById('tabCalendar').classList.add('active');
-  document.getElementById('tabWeek').classList.remove('active');
-  document.getElementById('tabDay').classList.remove('active');
+  setActiveNavButtons('calendar');
   document.getElementById('openBlocks').style.display = 'none';
   renderCalendar();
 
@@ -697,9 +1251,7 @@ function switchToCalendarView(pushHistory = true) {
 function switchToWeekView(pushHistory = true) {
   document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active-view'));
   document.getElementById('weekView').classList.add('active-view');
-  document.getElementById('tabCalendar').classList.remove('active');
-  document.getElementById('tabDay').classList.remove('active');
-  document.getElementById('tabWeek').classList.add('active');
+  setActiveNavButtons('week');
   document.getElementById('openBlocks').style.display = 'inline-block';
   renderWeek();
 
@@ -712,9 +1264,7 @@ function switchToDayView(iso, pushHistory = true) {
   currentDate = iso;
   document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active-view'));
   document.getElementById('dayView').classList.add('active-view');
-  document.getElementById('tabCalendar').classList.remove('active');
-  document.getElementById('tabWeek').classList.remove('active');
-  document.getElementById('tabDay').classList.add('active');
+  setActiveNavButtons('day');
   document.getElementById('openBlocks').style.display = 'inline-block';
   populateDaySelects();
   renderDay();
@@ -722,6 +1272,15 @@ function switchToDayView(iso, pushHistory = true) {
   if (pushHistory) {
     window.history.pushState({ view: 'day', date: iso, init: true }, '', '');
   }
+}
+
+function stepDay(deltaDays) {
+  if (!currentDate) currentDate = toISO(new Date());
+  const d = parseISO(currentDate);
+  d.setDate(d.getDate() + deltaDays);
+  currentDate = toISO(d);
+  populateDaySelects();
+  renderDay();
 }
 
 // ==================== UTILIDADES ====================
@@ -816,19 +1375,212 @@ function getMondayOf(date) {
   return d;
 }
 
-// ==================== MODO BLOQUEO ====================
+// ==================== PULSACIÓN PROLONGADA (SEMANA Y CALENDARIO) ====================
+const longPressInspectorModal = document.getElementById('longPressInspectorModal');
+let longPressTimer = null;
+let longPressFired = false;
+let longPressOrigin = { x: 0, y: 0 };
+const LONG_PRESS_MS = 480;
+
+function clearLongPressTimer() {
+  if (longPressTimer) {
+    clearTimeout(longPressTimer);
+    longPressTimer = null;
+  }
+}
+
+function scheduleLongPress(originX, originY, callback) {
+  clearLongPressTimer();
+  longPressFired = false;
+  longPressOrigin = { x: originX, y: originY };
+  longPressTimer = setTimeout(() => {
+    longPressTimer = null;
+    longPressFired = true;
+    callback();
+  }, LONG_PRESS_MS);
+}
+
+function evaluateLongPressMove(clientX, clientY) {
+  if (!longPressTimer) return;
+  const dist = Math.hypot(clientX - longPressOrigin.x, clientY - longPressOrigin.y);
+  if (dist > 10) {
+    clearLongPressTimer();
+  }
+}
+
+function openWeekHourInspector(iso, blockIdx) {
+  inspectorTargetISO = iso;
+  const day = getDay(iso);
+  const blocks = state.blocks || defaultBlocks();
+  const blk = blocks[blockIdx] || { ini: '', fin: '', label: '' };
+  const rangeText = blk.ini && blk.fin
+    ? `${formatHour12(blk.ini)} - ${formatHour12(blk.fin)}${blk.label ? ` (${blk.label})` : ''}`
+    : `Bloque ${blockIdx + 1}`;
+
+  document.getElementById('inspectorTitle').textContent = rangeText;
+  document.getElementById('inspectorSubtitle').textContent = formatDate(iso);
+
+  const allJobs = day.trabajo[blockIdx] || [];
+  const visibleJobs = currentWorkFilter ? allJobs.filter(j => j === currentWorkFilter) : allJobs;
+  const studySub = day.estudio[blockIdx] || '';
+  const prio = effectivePriority(iso);
+
+  let html = '';
+
+  html += `<div class="inspectorSection"><div class="inspectorSectionTitle">Trabajo en esta hora</div>`;
+  if (visibleJobs.length > 0) {
+    html += visibleJobs.map(j =>
+      `<span class="inspectorBadge" style="background:${getJobColorByName(j)}">${j}</span>`
+    ).join('');
+  } else if (currentWorkFilter && allJobs.length > 0) {
+    html += `<span class="hint">Hay otro trabajo en esta hora, pero el filtro está en "${currentWorkFilter}".</span>`;
+  } else {
+    html += `<span class="hint">Sin trabajo asignado en este bloque.</span>`;
+  }
+  html += `</div>`;
+
+  html += `<div class="inspectorSection"><div class="inspectorSectionTitle">Estudio (Materia)</div>`;
+  if (studySub) {
+    html += `<span class="inspectorBadge" style="background:${getSubjectColor(studySub)}">${studySub}</span>`;
+    if (visibleJobs.length > 0) {
+      const winnerText = prio === 'trabajo'
+        ? `Prioridad del día: Trabajo (${visibleJobs.join(' / ')})`
+        : `Prioridad del día: Estudio (${studySub})`;
+      html += `<div class="hint" style="margin-top:6px;">${winnerText}</div>`;
+    }
+  } else {
+    html += `<span class="hint">Sin materia asignada en este bloque.</span>`;
+  }
+  html += `</div>`;
+
+  html += `<div class="inspectorSection"><div class="inspectorSectionTitle">Evaluaciones / Tareas del día</div>`;
+  if (day.evaluations && day.evaluations.length > 0) {
+    html += day.evaluations.map(ev =>
+      `<div style="margin-bottom:4px;">${ev.done ? '✓ ' : '• '}<strong>${ev.subject}</strong>: ${ev.title}${ev.done ? ' <em>(Completada)</em>' : ''}</div>`
+    ).join('');
+  } else {
+    html += `<span class="hint">No hay evaluaciones ni tareas en este día.</span>`;
+  }
+  html += `</div>`;
+
+  html += `<div class="inspectorSection"><div class="inspectorSectionTitle">Notas del día</div>`;
+  if (day.notes && day.notes.length > 0) {
+    html += day.notes.map(n => `<div style="margin-bottom:4px;">• ${n}</div>`).join('');
+  } else {
+    html += `<span class="hint">No hay notas registradas en este día.</span>`;
+  }
+  html += `</div>`;
+
+  document.getElementById('inspectorBody').innerHTML = html;
+  longPressInspectorModal.classList.add('open');
+}
+
+function openCalendarDayInspector(iso) {
+  inspectorTargetISO = iso;
+  const day = getDay(iso);
+
+  document.getElementById('inspectorTitle').textContent = 'Resumen del día';
+  document.getElementById('inspectorSubtitle').textContent = formatDate(iso);
+
+  let activeWorks = getActiveWorkLabelsWithColors(iso);
+  Object.values(day.trabajo || {}).forEach(jobsArr => {
+    (jobsArr || []).forEach(wName => {
+      if (wName && !activeWorks.some(aw => aw.name === wName)) {
+        activeWorks.push({ name: wName, color: getJobColorByName(wName) });
+      }
+    });
+  });
+  if (currentWorkFilter) {
+    activeWorks = activeWorks.filter(w => w.name === currentWorkFilter);
+  }
+
+  const studySubjects = Array.from(new Set(Object.values(day.estudio || {}).filter(Boolean)));
+
+  let html = '';
+
+  html += `<div class="inspectorSection"><div class="inspectorSectionTitle">Trabajos</div>`;
+  if (activeWorks.length > 0) {
+    html += activeWorks.map(w =>
+      `<span class="inspectorBadge" style="background:${w.color}">${w.name}</span>`
+    ).join('');
+  } else {
+    html += `<span class="hint">Sin trabajos programados ni marcados.</span>`;
+  }
+  html += `</div>`;
+
+  html += `<div class="inspectorSection"><div class="inspectorSectionTitle">Materias del día</div>`;
+  if (studySubjects.length > 0) {
+    html += studySubjects.map(s =>
+      `<span class="inspectorBadge" style="background:${getSubjectColor(s)}">${s}</span>`
+    ).join('');
+  } else {
+    html += `<span class="hint">Sin materias asignadas este día.</span>`;
+  }
+  html += `</div>`;
+
+  html += `<div class="inspectorSection"><div class="inspectorSectionTitle">Evaluaciones / Tareas</div>`;
+  if (day.evaluations && day.evaluations.length > 0) {
+    html += day.evaluations.map(ev =>
+      `<div style="margin-bottom:4px;">${ev.done ? '✓ ' : '• '}<strong>${ev.subject}</strong>: ${ev.title}${ev.done ? ' <em>(Completada)</em>' : ''}</div>`
+    ).join('');
+  } else {
+    html += `<span class="hint">Sin evaluaciones registradas.</span>`;
+  }
+  html += `</div>`;
+
+  html += `<div class="inspectorSection"><div class="inspectorSectionTitle">Notas</div>`;
+  if (day.notes && day.notes.length > 0) {
+    html += day.notes.map(n => `<div style="margin-bottom:4px;">• ${n}</div>`).join('');
+  } else {
+    html += `<span class="hint">Sin notas registradas.</span>`;
+  }
+  html += `</div>`;
+
+  document.getElementById('inspectorBody').innerHTML = html;
+  longPressInspectorModal.classList.add('open');
+}
+
+document.getElementById('inspectorCloseBtn').onclick = () => {
+  longPressInspectorModal.classList.remove('open');
+};
+
+document.getElementById('inspectorGoDayBtn').onclick = () => {
+  const target = inspectorTargetISO || currentDate || toISO(new Date());
+  longPressInspectorModal.classList.remove('open');
+  switchToDayView(target, true);
+};
+
+document.getElementById('inspectorOpenNotesBtn').onclick = () => {
+  const target = inspectorTargetISO || currentDate || toISO(new Date());
+  longPressInspectorModal.classList.remove('open');
+  openDayNotesModalFor(target);
+};
+
+document.addEventListener('pointermove', e => {
+  evaluateLongPressMove(e.clientX, e.clientY);
+}, { passive: true });
+
+document.addEventListener('pointerup', () => {
+  clearLongPressTimer();
+});
+
+document.addEventListener('pointercancel', () => {
+  clearLongPressTimer();
+});
+
+// ==================== MODO BLOQUEO (SOLO PINTADO/EDICIÓN DE CELDAS) ====================
 const lockBtn = document.getElementById('lockBtn');
 lockBtn.onclick = () => {
   isLocked = !isLocked;
   if (isLocked) {
     lockBtn.textContent = '\ud83d\udd12 Bloqueado (Solo ver)';
     lockBtn.classList.add('lock-active');
-    document.getElementById('editHint').textContent = 'Modo bloqueo activo: no se puede editar ni pintar.';
+    document.getElementById('editHint').textContent = 'Modo bloqueo activo: no se puede editar ni pintar celdas.';
     document.getElementById('dayToolsContainer').style.display = 'none';
   } else {
     lockBtn.textContent = '\ud83d\udd13 Modo Edici\u00f3n';
     lockBtn.classList.remove('lock-active');
-    document.getElementById('editHint').textContent = 'Selecciona trabajo o materia y arrastra para pintar.';
+    document.getElementById('editHint').textContent = 'Selecciona trabajo o materia y arrastra para pintar celdas.';
     document.getElementById('dayToolsContainer').style.display = 'flex';
   }
 };
@@ -836,7 +1588,8 @@ lockBtn.onclick = () => {
 // ==================== EXPORTAR IMAGEN ====================
 function exportToImage(elementId, filename) {
   const el = document.getElementById(elementId);
-  html2canvas(el, { scale: 3, backgroundColor: '#1e1e2e' }).then(canvas => {
+  const cfg = getEffectiveAppearance();
+  html2canvas(el, { scale: 3, backgroundColor: cfg.bgApp }).then(canvas => {
     const link = document.createElement('a');
     link.download = filename + '_' + toISO(new Date()) + '.png';
     link.href = canvas.toDataURL('image/png');
@@ -876,7 +1629,6 @@ document.querySelectorAll('.globalWorkFilter').forEach(select => {
     currentWorkFilter = e.target.value;
     document.querySelectorAll('.globalWorkFilter').forEach(s => s.value = currentWorkFilter);
     
-    // Si seleccionamos un trabajo en el filtro en vista Día, también sincronizamos el pincel automáticamente
     if (currentWorkFilter) {
       const brushSelect = document.getElementById('dayWorkSelect');
       if (brushSelect) brushSelect.value = currentWorkFilter;
@@ -993,11 +1745,29 @@ function makeCalDay(y, m, d, otherMonth) {
     }
   }
 
-  el.addEventListener('click', () => switchToDayView(iso));
+  el.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    scheduleLongPress(e.clientX, e.clientY, () => {
+      openCalendarDayInspector(iso);
+    });
+  });
+
+  el.addEventListener('click', () => {
+    if (longPressFired) {
+      longPressFired = false;
+      return;
+    }
+    switchToDayView(iso);
+  });
+
+  el.addEventListener('contextmenu', e => {
+    if (longPressFired) e.preventDefault();
+  });
+
   return el;
 }
 
-// ==================== GESTOS TÁCTILES (SWIPE) EN CALENDARIO ====================
+// ==================== GESTOS TÁCTILES (SWIPE) ====================
 let touchStartX = 0;
 let touchEndX = 0;
 const calViewElement = document.getElementById('calendarView');
@@ -1008,10 +1778,6 @@ calViewElement.addEventListener('touchstart', e => {
 
 calViewElement.addEventListener('touchend', e => {
   touchEndX = e.changedTouches[0].screenX;
-  handleCalendarSwipe();
-}, {passive: true});
-
-function handleCalendarSwipe() {
   const swipeThreshold = 50;
   if (touchEndX < touchStartX - swipeThreshold) {
     document.getElementById('nextMonth').click();
@@ -1019,7 +1785,58 @@ function handleCalendarSwipe() {
   if (touchEndX > touchStartX + swipeThreshold) {
     document.getElementById('prevMonth').click();
   }
-}
+}, {passive: true});
+
+// Arrastre en la zona de semana (solo la cuadrícula, sin tocar el header)
+const weekSwipeZone = document.getElementById('weekSwipeZone');
+let weekSwipeStartX = 0;
+let weekSwipeStartY = 0;
+
+weekSwipeZone.addEventListener('touchstart', e => {
+  if (painting) return;
+  weekSwipeStartX = e.changedTouches[0].screenX;
+  weekSwipeStartY = e.changedTouches[0].screenY;
+}, {passive: true});
+
+weekSwipeZone.addEventListener('touchend', e => {
+  if (painting) return;
+  const dx = e.changedTouches[0].screenX - weekSwipeStartX;
+  const dy = e.changedTouches[0].screenY - weekSwipeStartY;
+  if (Math.abs(dx) > 65 && Math.abs(dx) > Math.abs(dy) * 1.6) {
+    if (!weekStartDate) weekStartDate = getMondayOf(new Date());
+    weekStartDate.setDate(weekStartDate.getDate() + (dx < 0 ? 7 : -7));
+    renderWeek();
+  }
+}, {passive: true});
+
+// Arrastre en la barra inferior para alternar entre Calendario, Semana y Día
+const VIEW_ORDER = ['calendar', 'week', 'day'];
+const bottomNavBar = document.getElementById('bottomNavBar');
+let navSwipeStartX = 0;
+let navSwipeHandled = false;
+
+bottomNavBar.addEventListener('touchstart', e => {
+  navSwipeStartX = e.changedTouches[0].screenX;
+  navSwipeHandled = false;
+}, {passive: true});
+
+bottomNavBar.addEventListener('touchmove', e => {
+  if (navSwipeHandled) return;
+  const dx = e.changedTouches[0].screenX - navSwipeStartX;
+  if (Math.abs(dx) > 48) {
+    navSwipeHandled = true;
+    const currentIdx = VIEW_ORDER.indexOf(getCurrentActiveViewName());
+    const nextIdx = dx < 0
+      ? Math.min(VIEW_ORDER.length - 1, currentIdx + 1)
+      : Math.max(0, currentIdx - 1);
+    if (nextIdx !== currentIdx) {
+      const targetView = VIEW_ORDER[nextIdx];
+      if (targetView === 'calendar') switchToCalendarView(true);
+      else if (targetView === 'week') switchToWeekView(true);
+      else if (targetView === 'day') switchToDayView(currentDate || toISO(new Date()), true);
+    }
+  }
+}, {passive: true});
 
 // ==================== VISTA DÍA ====================
 function populateDaySelects() {
@@ -1071,13 +1888,13 @@ function populateDaySelects() {
   }
 }
 
-// Obtiene el trabajo activo para el pincel/edición en Vista Día
 function getTargetBrushJob() {
   return currentWorkFilter || document.getElementById('dayWorkSelect').value || 'Trabajo';
 }
 
 function renderDay() {
   populateAllWorkFilterSelects();
+  if (!currentDate) currentDate = toISO(new Date());
   document.getElementById('dayTitle').textContent = formatDate(currentDate);
   const day = getDay(currentDate);
   document.getElementById('dayPriority').value = day.priority || state.globalPriority;
@@ -1100,14 +1917,11 @@ function renderDay() {
   blocks.forEach((blk, idx) => {
     const hl = document.createElement('div');
     hl.className = 'hourLabel';
-    hl.textContent = `${formatHour12(blk.ini)} a ${formatHour12(blk.fin)}`;
+    hl.textContent = `${formatHour12(blk.ini)} - ${formatHour12(blk.fin)}`;
     cols.appendChild(hl);
 
-    // Todos los trabajos asignados en este bloque
     const allJobsInBlock = day.trabajo[idx] || [];
-    
-    // Filtrar según lo que el usuario tenga seleccionado en el filtro
-    let visibleJobs = currentWorkFilter 
+    const visibleJobs = currentWorkFilter 
       ? allJobsInBlock.filter(j => j === currentWorkFilter)
       : allJobsInBlock;
 
@@ -1119,7 +1933,6 @@ function renderDay() {
         ct.style.backgroundColor = getJobColorByName(visibleJobs[0]);
         ct.textContent = visibleJobs[0];
       } else {
-        // Si hay más de 1 trabajo simultáneo en la misma hora
         ct.style.background = `linear-gradient(90deg, ${getJobColorByName(visibleJobs[0])} 50%, ${getJobColorByName(visibleJobs[1])} 50%)`;
         ct.textContent = visibleJobs.join(' / ');
         ct.title = 'Trabajos simultáneos: ' + visibleJobs.join(', ');
@@ -1133,14 +1946,14 @@ function renderDay() {
     if (e) { 
       ce.className = 'cell estudio';
       ce.style.backgroundColor = getSubjectColor(e);
-      ce.textContent = e; 
+      ce.textContent = e;
+      ce.title = e;
     } else {
       ce.className = 'cell';
       ce.style.backgroundColor = '';
     }
     cols.appendChild(ce);
 
-    // Columna RESULTADO
     const cr = document.createElement('div');
     cr.className = 'cell resultado';
     const hasWork = visibleJobs.length > 0;
@@ -1171,7 +1984,8 @@ function renderDay() {
     else if (e) { 
       cr.classList.add('win-e'); 
       cr.style.backgroundColor = getSubjectColor(e);
-      cr.textContent = e; 
+      cr.textContent = e;
+      cr.title = e;
     }
     cols.appendChild(cr);
   });
@@ -1186,7 +2000,7 @@ function renderSubjectsEditor() {
   container.innerHTML = '';
   
   if (!draftSubjects || draftSubjects.length === 0) {
-    container.innerHTML = '<div style="font-size:12px; color:#888; text-align:center; padding:10px;">No hay materias configuradas aún.</div>';
+    container.innerHTML = '<div style="font-size:12px; opacity:0.7; text-align:center; padding:10px;">No hay materias configuradas aún.</div>';
     return;
   }
 
@@ -1199,7 +2013,7 @@ function renderSubjectsEditor() {
       <label>Nombre de la materia:</label>
       <input type="text" class="subName" value="${sub.name || ''}" placeholder="Ej: Matemáticas">
       <label>Color representativo:</label>
-      <input type="color" class="subColor" value="${assignedColor}" style="width: 100%; height: 32px; background: #3a3a52; cursor: pointer;">
+      <input type="color" class="subColor" value="${assignedColor}" style="width: 100%; height: 32px; cursor: pointer;">
     `;
     container.appendChild(item);
   });
@@ -1310,12 +2124,10 @@ document.getElementById('applyWorkHoursToPatternDays').onclick = async () => {
 
     if (hasThisJobToday) {
       const targetDay = getDay(iso);
-      // Limpiar solo las ocurrencias previas de este trabajo específico sin tocar los demás
       for (const h in targetDay.trabajo) {
         targetDay.trabajo[h] = targetDay.trabajo[h].filter(j => j !== selectedJob);
         if (targetDay.trabajo[h].length === 0) delete targetDay.trabajo[h];
       }
-      // Añadir el horario de este trabajo específico
       if (Object.keys(hoursTemplate).length > 0) {
         for (const h in hoursTemplate) {
           if (!targetDay.trabajo[h]) targetDay.trabajo[h] = [];
@@ -1340,7 +2152,7 @@ document.getElementById('applyWorkHoursToPatternDays').onclick = async () => {
   }
 };
 
-// ==================== VENTANA MODAL DE NOTAS Y EVALUACIONES ====================
+// ==================== VENTANA MODAL DE NOTAS Y EVALUACIONES (SIEMPRE EDITABLE) ====================
 const dayNotesModal = document.getElementById('dayNotesModal');
 
 function openDayNotesModalFor(iso) {
@@ -1351,15 +2163,15 @@ function openDayNotesModalFor(iso) {
   const evalList = document.getElementById('modalEvalsList');
   evalList.innerHTML = '';
   if (!day.evaluations || day.evaluations.length === 0) {
-    evalList.innerHTML = '<div style="font-size:12px; color:#888;">No hay evaluaciones registradas.</div>';
+    evalList.innerHTML = '<div style="font-size:12px; opacity:0.7;">No hay evaluaciones registradas.</div>';
   } else {
     day.evaluations.forEach((ev, idx) => {
       const row = document.createElement('div');
       row.className = 'evalItemRow ' + (ev.done ? 'done' : '');
       row.innerHTML = `
-        <input type="checkbox" ${ev.done ? 'checked' : ''} ${isLocked ? 'disabled' : ''} onchange="toggleModalEvalDone('${iso}', ${idx})">
+        <input type="checkbox" ${ev.done ? 'checked' : ''} onchange="toggleModalEvalDone('${iso}', ${idx})">
         <span><strong>${ev.subject}</strong>: ${ev.title}</span>
-        ${!isLocked ? `<button class="delEval" onclick="deleteModalEval('${iso}', ${idx})">X</button>` : ''}
+        <button class="delEval" onclick="deleteModalEval('${iso}', ${idx})">X</button>
       `;
       evalList.appendChild(row);
     });
@@ -1368,22 +2180,22 @@ function openDayNotesModalFor(iso) {
   const notesList = document.getElementById('modalNotesList');
   notesList.innerHTML = '';
   if (!day.notes || day.notes.length === 0) {
-    notesList.innerHTML = '<div style="font-size:12px; color:#888;">No hay notas adicionales.</div>';
+    notesList.innerHTML = '<div style="font-size:12px; opacity:0.7;">No hay notas adicionales.</div>';
   } else {
     day.notes.forEach((noteText, idx) => {
       const row = document.createElement('div');
       row.className = 'noteItemRow';
       row.innerHTML = `
-        <span style="font-size:13px; color:#e0d0ff;">• ${noteText}</span>
-        ${!isLocked ? `<button class="delNote" onclick="deleteModalNote('${iso}', ${idx})">X</button>` : ''}
+        <span style="font-size:13px;">• ${noteText}</span>
+        <button class="delNote" onclick="deleteModalNote('${iso}', ${idx})">X</button>
       `;
       notesList.appendChild(row);
     });
   }
 
-  document.getElementById('openAddEvalModal').style.display = isLocked ? 'none' : 'block';
-  document.getElementById('modalNoteInput').style.display = isLocked ? 'none' : 'block';
-  document.getElementById('saveModalNoteBtn').style.display = isLocked ? 'none' : 'block';
+  document.getElementById('openAddEvalModal').style.display = 'block';
+  document.getElementById('modalNoteInput').style.display = 'block';
+  document.getElementById('saveModalNoteBtn').style.display = 'block';
   document.getElementById('modalNoteInput').value = '';
 
   dayNotesModal.classList.add('open');
@@ -1400,7 +2212,6 @@ document.getElementById('closeDayNotesModal').onclick = () => {
 };
 
 window.toggleModalEvalDone = function(iso, index) {
-  if (isLocked) return;
   const day = getDay(iso);
   if (day.evaluations[index]) {
     day.evaluations[index].done = !day.evaluations[index].done;
@@ -1410,7 +2221,6 @@ window.toggleModalEvalDone = function(iso, index) {
 };
 
 window.deleteModalEval = function(iso, index) {
-  if (isLocked) return;
   const day = getDay(iso);
   day.evaluations.splice(index, 1);
   save();
@@ -1418,7 +2228,6 @@ window.deleteModalEval = function(iso, index) {
 };
 
 window.deleteModalNote = function(iso, index) {
-  if (isLocked) return;
   const day = getDay(iso);
   day.notes.splice(index, 1);
   save();
@@ -1426,7 +2235,6 @@ window.deleteModalNote = function(iso, index) {
 };
 
 document.getElementById('saveModalNoteBtn').onclick = async () => {
-  if (isLocked) return;
   const val = document.getElementById('modalNoteInput').value.trim();
   if (!val) { await showAppAlert('Escribe contenido para la nota.'); return; }
   const day = getDay(modalTargetISO);
@@ -1495,7 +2303,7 @@ function renderWeek() {
     let evalBadge = '';
     const day = state.days[iso];
     if (day && day.evaluations && day.evaluations.length > 0) {
-      evalBadge = '<span style="color:#ffcc66; font-size:9px; display:block;">[Eval Pendiente]</span>';
+      evalBadge = '<span style="color:#d98200; font-size:9px; display:block;">[Eval Pendiente]</span>';
     }
 
     h.innerHTML = `
@@ -1553,8 +2361,28 @@ function renderWeek() {
       } else if (e) {
         cell.style.backgroundColor = getSubjectColor(e);
         cell.textContent = e;
+        cell.title = e;
       }
-      cell.onclick = () => switchToDayView(iso);
+
+      cell.addEventListener('pointerdown', ev => {
+        if (ev.pointerType === 'mouse' && ev.button !== 0) return;
+        scheduleLongPress(ev.clientX, ev.clientY, () => {
+          openWeekHourInspector(iso, idx);
+        });
+      });
+
+      cell.addEventListener('click', () => {
+        if (longPressFired) {
+          longPressFired = false;
+          return;
+        }
+        switchToDayView(iso);
+      });
+
+      cell.addEventListener('contextmenu', ev => {
+        if (longPressFired) ev.preventDefault();
+      });
+
       grid.appendChild(cell);
     }
   });
@@ -1652,17 +2480,25 @@ document.addEventListener('dblclick', async e => {
 });
 
 // ==================== NAVEGACIÓN Y BOTONES ====================
-document.getElementById('tabCalendar').onclick = () => {
+document.getElementById('navCalendar').onclick = () => {
   switchToCalendarView(true);
 };
 
-document.getElementById('tabDay').onclick = () => {
+document.getElementById('navDay').onclick = () => {
   if (!currentDate) currentDate = toISO(new Date());
   switchToDayView(currentDate, true);
 };
 
-document.getElementById('tabWeek').onclick = () => {
+document.getElementById('navWeek').onclick = () => {
   switchToWeekView(true);
+};
+
+document.getElementById('prevDayBtn').onclick = () => stepDay(-1);
+document.getElementById('nextDayBtn').onclick = () => stepDay(1);
+document.getElementById('dayTodayBtn').onclick = () => {
+  currentDate = toISO(new Date());
+  populateDaySelects();
+  renderDay();
 };
 
 document.getElementById('prevMonth').onclick = () => {
@@ -1689,9 +2525,6 @@ document.getElementById('weekToday').onclick = () => {
   weekStartDate = getMondayOf(new Date());
   renderWeek();
 };
-document.getElementById('backToCal').onclick = () => {
-  window.history.back();
-};
 
 document.getElementById('dayPriority').onchange = e => {
   if (isLocked) return;
@@ -1714,7 +2547,6 @@ document.getElementById('clearTrabajo').onclick = () => {
   if (isLocked) return;
   const day = getDay(currentDate);
   if (currentWorkFilter) {
-    // Limpiar solo el trabajo filtrado
     for (const h in day.trabajo) {
       day.trabajo[h] = day.trabajo[h].filter(j => j !== currentWorkFilter);
       if (day.trabajo[h].length === 0) delete day.trabajo[h];
@@ -1760,7 +2592,7 @@ function renderPatternsEditor() {
       <label>Nombre del trabajo:</label>
       <input type="text" class="patName" value="${pat.name || ''}" placeholder="Ej: Trabajo A" data-orig-name="${pat.name || ''}">
       <label>Color representativo:</label>
-      <input type="color" class="patColor" value="${assignedColor}" style="width: 100%; height: 32px; background: #3a3a52; cursor: pointer;">
+      <input type="color" class="patColor" value="${assignedColor}" style="width: 100%; height: 32px; cursor: pointer;">
       <label>Fecha de inicio:</label>
       <input type="date" class="patStart" value="${pat.startDate || ''}">
       <label>Fecha de fin (opcional):</label>
@@ -2116,8 +2948,12 @@ document.getElementById('importFile').onchange = e => {
     try {
         state = Object.assign(state, JSON.parse(ev.target.result));
         if (!state.blocks || state.blocks.length === 0) state.blocks = defaultBlocks();
+        if (!state.appearance) state.appearance = Object.assign({}, DARK_THEME_DEFAULTS);
         for (const iso in state.days) normalizeDayWorkData(state.days[iso]);
-        save(); renderCalendar(); renderWeek();
+        save();
+        applyAppearanceToDOM(getEffectiveAppearance());
+        renderCalendar();
+        renderWeek();
         await showAppAlert('Datos importados.');
     } catch(err) { await showAppAlert('Archivo inválido.'); }
   };
@@ -2129,6 +2965,7 @@ load();
 const hoy = new Date();
 calYear = hoy.getFullYear();
 calMonth = hoy.getMonth();
+currentDate = toISO(hoy);
 renderCalendar();
 </script>
 <script>
